@@ -1,0 +1,6 @@
+{
+  "task": "Implement Terraviva farmer depot and SMS interface",
+  "status": "implemented; deployment and live-provider activation blocked",
+  "verification": ["10 automated tests pass", "npm run build passes", "local HTTP 200", "GitHub Actions passed initial commit"],
+  "limitations": ["browser automation blocked by host sandbox", "Vercel denies project creation", "Redis and Twilio credentials not configured", "commercial reports and sales disabled"]
+}
