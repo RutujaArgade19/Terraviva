@@ -88,7 +88,7 @@ function tableHTML(rows,columns,limit=8){
 }
 function issueHTML(issues){return issues?.length?'<ul class="import-issues">'+issues.slice(0,30).map(issue=>'<li>'+escape(typeof issue==='string'?issue:((issue.row!==undefined?'Row '+issue.row+' · ':'')+(issue.field?issue.field+': ':'')+(issue.message||JSON.stringify(issue))))+'</li>').join('')+'</ul>'+(issues.length>30?'<p class="muted">Showing 30 of '+issues.length+' issues.</p>':''):''}
 function create(hooks){
-  let draft={},catalog={state:'idle',datasets:[],status:'',unpublishedCount:0,error:''};
+  let draft={},catalog={state:'idle',datasets:[],status:'',unpublished:[],error:''};
   const reset=()=>{draft={name:'',bytes:null,analysis:null,tableIndex:null,mapping:{},claims:[],reference:false,plan:null,rows:null,preview:null,result:null,error:'',issues:[],context:null}};
   reset();
   const context=()=>hooks.getContext();
@@ -127,7 +127,7 @@ function create(hooks){
       if(!Array.isArray(manifest.datasets))throw Error('The source catalogue has an unsupported format.');
       catalog.datasets=manifest.datasets.filter(entry=>entry&&typeof entry.id==='string'&&typeof entry.name==='string'&&typeof entry.file==='string');
       catalog.status=typeof manifest.status==='string'?manifest.status:'';
-      catalog.unpublishedCount=Array.isArray(manifest.unpublishedDatasets)?manifest.unpublishedDatasets.length:0;
+      catalog.unpublished=Array.isArray(manifest.unpublishedDatasets)?manifest.unpublishedDatasets:[];
       catalog.state='ready';
     }catch(error){catalog.state='error';catalog.error=error.message}
     hooks.refresh();
@@ -194,13 +194,21 @@ function create(hooks){
     let html='<div class="section-head"><div><p class="eyebrow">BRING YOUR HARVEST RECORDS HOME</p><h2>Data import</h2><p class="muted">Choose a source, inspect its rows, and confirm the records to add.</p></div><a class="link" href="/data-report.html" target="_blank" rel="noopener">Open full data report ↗</a></div>';
     html+='<div class="import-destination"><span class="badge">'+(destination.connected?'Private pilot depot':'Browser demo')+'</span><strong>Destination: '+escape(destination.farm)+'</strong><span>'+(destination.connected?'Confirmed imports are stored in your connected depot.':'Confirmed imports stay in this browser.')+'</span></div>';
     html+='<article class="card space"><p class="eyebrow">01 / SOURCE</p><h3>Choose harvest data for this farm</h3><p class="muted">CSV or JSON · up to 1 MiB · 1,000 rows per batch. Regional statistics and reference tables can be explored in the full report; they are not individual harvest declarations.</p>';
-    if(catalog.state==='ready'&&catalog.datasets.length)html+='<div class="import-catalog"><label>Repository source<select id="import-catalog"><option value="">Choose an available source</option>'+catalog.datasets.map((entry,index)=>'<option value="'+index+'">'+escape(entry.name)+(Number.isFinite(entry.rows)?' · '+entry.rows+' rows':'')+'</option>').join('')+'</select></label><button class="link" id="import-load-source">Load selected source</button></div>';
-    else if(catalog.state==='ready'){
-      const message=catalog.status==='requires-split'||catalog.unpublishedCount
-        ?'Source data has been staged, but '+(catalog.unpublishedCount?catalog.unpublishedCount+' table(s)':'the available tables')+' need splitting before they can be offered in this catalogue. You can analyse a local file in the full report, or provide a smaller file here.'
-        :catalog.status==='awaiting-source-archive'?'The source archive has not been added yet. You can choose a local CSV or JSON file below.'
-        :'No browser-ready source files are listed in this catalogue. You can choose a local CSV or JSON file below.';
-      html+='<p class="import-note">'+escape(message)+'</p>';
+    if(catalog.state==='ready'){
+      html+='<p class="import-note"><strong>Repository catalogue:</strong> '+catalog.datasets.length+' available table'+(catalog.datasets.length===1?'':'s')+' · '+catalog.unpublished.length+' unpublished table'+(catalog.unpublished.length===1?'':'s')+'.</p>';
+      if(catalog.datasets.length)html+='<div class="import-catalog"><label>Repository source<select id="import-catalog"><option value="">Choose an available source</option>'+catalog.datasets.map((entry,index)=>'<option value="'+index+'">'+escape(entry.name)+(Number.isFinite(entry.rows)?' · '+entry.rows+' rows':'')+'</option>').join('')+'</select></label><button class="link" id="import-load-source">Load selected source</button></div>';
+      else {
+        const message=catalog.status==='requires-split'||catalog.unpublished.length
+          ?'Source data has been staged, but '+(catalog.unpublished.length?catalog.unpublished.length+' table(s)':'the available tables')+' need splitting before they can be offered in this catalogue. You can analyse a local file in the full report, or provide a smaller file here.'
+          :catalog.status==='awaiting-source-archive'?'The source archive has not been added yet. You can choose a local CSV or JSON file below.'
+          :'No browser-ready source files are listed in this catalogue. You can choose a local CSV or JSON file below.';
+        html+='<p class="import-note">'+escape(message)+'</p>';
+      }
+      if(catalog.unpublished.length)html+='<div class="import-note"><strong>Why these tables are unavailable</strong><ul class="import-issues">'+catalog.unpublished.map((entry,index)=>{
+        const name=typeof entry?.name==='string'&&entry.name.trim()?entry.name:typeof entry?.id==='string'&&entry.id.trim()?entry.id:'Table '+(index+1);
+        const reason=typeof entry?.reason==='string'&&entry.reason.trim()?entry.reason:entry?.status==='requires-split'||catalog.status==='requires-split'?'This table requires splitting before a browser view can be published.':'No publication reason was supplied in the catalogue.';
+        return '<li><strong>'+escape(name)+':</strong> '+escape(reason)+'</li>';
+      }).join('')+'</ul></div>';
     }
     else html+='<p class="muted">'+escape(catalog.state==='error'?catalog.error:'Checking the source catalogue…')+'</p>';
     html+='<label class="import-file">Local file<input id="import-file" type="file" accept=".csv,.json,text/csv,application/json"></label><p class="muted">'+(draft.name?'Selected: '+escape(draft.name):'Selecting a file only creates a preview.')+'</p>';

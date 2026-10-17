@@ -4,7 +4,7 @@ Farmer-controlled data depot with an SMS field interface, personal dashboard, sc
 
 ## Current data status
 
-The requested source is `all-datasets.zip`. Its Windows path was supplied, but the archive itself has not been transferred into this workspace. **No real archive rows or populated base database are included in this revision.** `public/datasets/manifest.json` records that state explicitly. The staging command, schema, app import workflow and interactive HTML report are ready for the source.
+The requested source is `all-datasets.zip`. Its OneDrive sharing page is accessible, but the completed browser download has not transferred into the analysis workspace. **No real archive rows or populated base database are included in this revision.** `public/datasets/manifest.json` records that state explicitly. The staging command, schema, app import workflow and interactive HTML report are ready for accessible source bytes.
 
 ## Run
 
@@ -55,7 +55,7 @@ npm run build
 On Windows, the input can be supplied directly to a local checkout:
 
 ```powershell
-py -3 scripts/stage-datasets.py --input "C:\Users\HAL900\Downloads\all-datasets.zip" --publish-app --replace
+py -3 scripts/stage-datasets.py --input "C:\Users\HAL900\OneDrive\all-datasets.zip" --publish-app --replace
 ```
 
 See [data/README.md](data/README.md) for the storage contract, limits and reconciliation queries. Do not create an empty `base.sqlite3` to stand in for a missing archive.
@@ -85,7 +85,9 @@ Importing preserves existing permission and commercial participation settings. E
 
 Choose a file, paste text, use **Analyse my records** from the depot, or **Analyse source** from a loaded repository/local source. The source action opens the original bytes for analysis without harvest mapping or farmer assignment. A selected file is processed in browser memory. The depot-to-report handoff sends only the current farm and its record export to the report window on the same origin; it does not send the access token or permission state. Profile JSON may contain category values and should be handled like source-derived data.
 
-The report profiles all rows within explicit limits: 20 MiB, 100,000 rows, 250 columns, 2 million cells and 32 tables. Inputs beyond those limits are refused rather than sampled. Preview rows and category charts are intentionally bounded and labelled. Large numeric relationship matrices are bounded to a stated subset of fields. Built-in examples are labelled synthetic and never presented as the supplied archive.
+The interactive profiler processes all rows within explicit limits: 20 MiB, 100,000 rows, 250 columns, 2 million cells and 32 tables. Inputs beyond those limits are refused rather than sampled. Preview rows and category charts are intentionally bounded and labelled. Large numeric relationship matrices are bounded to a stated subset of fields. Built-in examples are labelled synthetic and never presented as the supplied archive.
+
+For a permanent report across an archive's source tables, the build accepts a derived `report/archive-analysis.json` following [the archive analysis contract](report/archive-contract.md). It renders source inventories, coverage, findings, per-table field dictionaries and statistical profiles directly into the HTML. Those findings remain visible when a visitor loads another file, tries an example or clears the interactive analyser. The build validates the declared scope and accepted fields before embedding the analysis. The staging command does not generate this analysis file automatically; it must be produced from the actual source data with its methods and exclusions documented. No such file is bundled while the archive bytes remain inaccessible.
 
 The fixed architecture audit is pinned to original commit `e0013fbfb8c9de2d5a7b850216270e6836857073`. It describes the original six-field SMS schema; import provenance is documented as an extension. There are no archive-level empirical findings until the archive is loaded.
 

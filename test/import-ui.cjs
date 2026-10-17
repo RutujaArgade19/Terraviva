@@ -165,9 +165,42 @@ test('generic loaded sources can be analysed without harvest mapping and retain 
 test('empty catalogue distinguishes staged tables requiring splits from an absent archive',async()=>{
   await withImportView({status:'requires-split',datasets:[],unpublishedDatasets:[{id:'large'}]},async({container})=>{
     assert.match(container.html,/Source data has been staged/);assert.match(container.html,/1 table\(s\)/);
+    assert.match(container.html,/0 available tables · 1 unpublished table/);
+    assert.match(container.html,/large:<\/strong> This table requires splitting/);
     assert.doesNotMatch(container.html,/archive has not been added/);
   });
   await withImportView({status:'awaiting-source-archive',datasets:[]},async({container})=>{
     assert.match(container.html,/archive has not been added/);
+    assert.match(container.html,/0 available tables · 0 unpublished tables/);
+  });
+});
+
+test('mixed catalogue keeps unavailable table counts and escaped reasons visible',async()=>{
+  const manifest={status:'ready',datasets:[{id:'ready',name:'Ready source',file:'ready.json',rows:10}],unpublishedDatasets:[
+    {id:'large',name:'Regional totals',status:'requires-split',reason:'Full dataset view exceeds 1 MiB; split explicitly.'},
+    {id:'wide',name:'<wide table>',status:'requires-split',reason:'Too many columns: <script>alert(1)</script>'}
+  ]};
+  await withImportView(manifest,async({container})=>{
+    assert.match(container.html,/1 available table · 2 unpublished tables/);
+    assert.ok(container.querySelector('#import-catalog'));
+    assert.ok(container.querySelector('#import-load-source'));
+    assert.match(container.html,/Ready source · 10 rows/);
+    assert.match(container.html,/Regional totals:<\/strong> Full dataset view exceeds 1 MiB; split explicitly\./);
+    assert.match(container.html,/&lt;wide table&gt;:<\/strong> Too many columns: &lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    assert.doesNotMatch(container.html,/<script>|archive has not been added/);
+  });
+});
+
+test('catalogue reports zero unpublished tables when every source is available',async()=>{
+  await withImportView({status:'ready',datasets:[{id:'a',name:'A',file:'a.json'},{id:'b',name:'B',file:'b.csv'}]},async({container})=>{
+    assert.match(container.html,/2 available tables · 0 unpublished tables/);
+    assert.doesNotMatch(container.html,/Why these tables are unavailable|archive has not been added/);
+  });
+});
+
+test('an unpublished table without a reason is identified without inventing a cause',async()=>{
+  await withImportView({status:'ready',datasets:[{id:'a',name:'A',file:'a.json'}],unpublishedDatasets:[{id:'unexplained'}]},async({container})=>{
+    assert.match(container.html,/1 available table · 1 unpublished table/);
+    assert.match(container.html,/unexplained:<\/strong> No publication reason was supplied in the catalogue\./);
   });
 });

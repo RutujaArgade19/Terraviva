@@ -8,10 +8,13 @@ const path=require('node:path');
 const vm=require('node:vm');
 const {createHash,webcrypto}=require('node:crypto');
 const E=require('../public/eda-engine.js');
+const {applyArchive}=require('../scripts/report-archive.cjs');
 const root=path.join(__dirname,'..');
 const csv='product,volume,field,date\nwheat,1,Peña,2026-10-16\n';
 function harness(options={}){
-  const ids=[...fs.readFileSync(path.join(root,'report/template.html'),'utf8').matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+  const template=fs.readFileSync(path.join(root,'report/template.html'),'utf8');
+  const html=options.archive?applyArchive(template,options.archive).html:template;
+  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
   class Node {
     constructor(id=''){this.id=id;this.value='';this.textContent='';this.hidden=false;this.handlers={};this.classList={toggle(){},add(){},remove(){}};this._html='';}
     set innerHTML(value){this._html=value;if(/-select$/.test(this.id)){const m=String(value).match(/<option value="([^"]*)"/);this.value=m?m[1]:'';}}
@@ -21,7 +24,7 @@ function harness(options={}){
     click(){return this.handlers.click?.({target:this});}
   }
   const nodes=Object.fromEntries(ids.map(id=>[id,new Node(id)]));
-  nodes['initial-dataset'].textContent='null';nodes.delimiter.value='auto';nodes['analysis-results'].hidden=true;
+  nodes['initial-dataset'].textContent='null';nodes['archive-analysis'].textContent=JSON.stringify(options.archive||null);nodes.delimiter.value='auto';nodes['analysis-results'].hidden=true;
   const downloads=[],listeners={};
   const context={
     TerravivaEDA:E,crypto:webcrypto,TextEncoder,TextDecoder,Blob,
@@ -111,4 +114,28 @@ test('source messages validate filename, byte representation, bounds and UTF-8 b
   await h.dispatch({origin:'https://example.test',source:h.context.opener,data:{type:'terraviva-report-data',payload:depot}});
   const profile=await h.profile();assert.equal(profile.evidenceKind,'depot');
   assert.equal(profile.source.sha256Basis,'generated-utf8-text');
+});
+
+test('permanent archive evidence survives uploads, examples and Clear; its download retains original provenance',async()=>{
+  // Explicitly synthetic metadata for a behavior test; never written to the
+  // production report/archive-analysis.json or represented as an actual archive.
+  const archive={schemaVersion:1,status:'partial',archive:{filename:'synthetic-fixture.zip',bytes:321,sha256:'a'.repeat(64)},coverage:{complete:false},files:[],tables:[],summary:['Synthetic archive fixture only.']};
+  const h=harness({archive});
+  const ids=['availability-title','availability-text','scope-kpi','scope-kpi-caption','evidence-dataset'];
+  ids.forEach(id=>h.nodes[id].textContent='Permanent archive value: '+id);
+  const evidence=()=>ids.map(id=>h.nodes[id].textContent);
+  const before=evidence();
+  await h.nodes['data-file'].handlers.change({target:{files:[file(csv)]}});
+  assert.match(h.nodes['analysis-status'].textContent,/Analysis complete/);
+  assert.deepEqual(evidence(),before);
+  await h.nodes['example-button'].click();
+  assert.equal(h.nodes['dataset-kind'].textContent,'Synthetic example');
+  assert.deepEqual(evidence(),before);
+  h.nodes['clear-data'].click();
+  assert.deepEqual(evidence(),before);
+  assert.match(h.nodes['analysis-status'].textContent,/archive report is unchanged/);
+  assert.equal(h.nodes['analysis-results'].hidden,true);
+  h.nodes['download-archive-profile'].click();
+  assert.deepEqual(JSON.parse(await h.downloads.at(-1).text()),archive);
+  assert.match(h.nodes['engine-limits'].textContent,/browser limits do not describe its coverage/);
 });
