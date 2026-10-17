@@ -135,6 +135,24 @@ check('JSON nested structures preserve record and envelope provenance', () => {
   assert.equal(column(t,'tags').type,'structured');
 });
 
+check('JSON arrays of null-prototype records remain structured without scalar coercion', () => {
+  const input = {'a/b': [
+    {amount: 1, detail: [{rawRows: 'x'}]},
+    {amount: 2, detail: [{rawRows: 'x'}]}
+  ]};
+  const result = E.analyzeText(JSON.stringify(input), {filename: 'nested.json'});
+  const t = result.tables[0];
+  assert.deepEqual(t.path, ['a/b']);
+  assert.equal(Object.getPrototypeOf(t.rows[0].detail[0]), null);
+  assert.equal(JSON.stringify(t.rows), JSON.stringify(input['a/b']));
+  const detail = column(t, 'detail');
+  assert.equal(detail.type, 'structured');
+  assert.equal(detail.uniqueCount, 1);
+  assert.equal(detail.nonMissingCount, 2);
+  assert.equal(detail.numeric, null);
+  assert.equal(column(t, 'amount').numeric.mean, 1.5);
+});
+
 check('duplicates ignore object key order but preserve types, array order and absent keys', () => {
   const t = E.profileTable([
     {a:1,b:{x:2,y:3},c:['u','v']},

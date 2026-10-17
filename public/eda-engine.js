@@ -413,9 +413,9 @@
     if (values.every(function (v) { return typeof v === 'string' && /^[+-]?0\d+$/.test(v.trim()); })) return 'leading-zero digit strings';
     if (values.some(function (v) { return typeof v === 'string' && /^0\d+$/.test(v.trim()); }) && values.every(function (v) { return typeof v === 'string' && /^\d+$/.test(v.trim()); })) return 'digit strings include leading zeros';
     if (values.every(function (v) { return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim()); })) return 'UUID-shaped values';
-    if (!measureName && values.every(function (v) { return /^(?:18|19|20|21)\d{2}$/.test(String(v).trim()); })) return 'year-shaped values';
+    if (!measureName && values.every(function (v) { return (typeof v === 'string' || typeof v === 'number') && /^(?:18|19|20|21)\d{2}$/.test(String(v).trim()); })) return 'year-shaped values';
     if (!measureName && values.every(function (v) { return typeof v === 'string' && /^\+\d[\d\s().-]{5,}$/.test(v.trim()); })) return 'telephone-shaped values';
-    if (!measureName && values.length > 1 && uniqueCount / values.length > 0.8 && values.every(function (v) { return /^\d{10,}$/.test(String(v).trim()); })) return 'long, mostly unique digit strings';
+    if (!measureName && values.length > 1 && uniqueCount / values.length > 0.8 && values.every(function (v) { return (typeof v === 'string' || typeof v === 'number') && /^\d{10,}$/.test(String(v).trim()); })) return 'long, mostly unique digit strings';
     return null;
   }
 

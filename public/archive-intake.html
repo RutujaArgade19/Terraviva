@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Terraviva · Archive workspace</title>
+  <link rel="stylesheet" href="/archive-intake.css">
+  <script src="/zip-source.js" defer></script>
+  <script src="/eda-engine.js" defer></script>
+  <script src="/archive-profile.js" defer></script>
+  <script src="/vendor/js-sha256.js" defer></script>
+  <script src="/archive-intake.js" defer></script>
+</head>
+<body>
+  <header><a class="wordmark" href="/">terraviva <span>◒</span></a><a href="/data-report.html">Data report ↗</a></header>
+  <main>
+    <p class="eyebrow">DATA INTAKE / SOURCE ARCHIVE</p>
+    <h1>Open the archive.<br><em>Keep its meaning.</em></h1>
+    <p class="lead">Inspect the original files, extract individual sources and calculate table profiles. The archive is read on this device; selecting it does not upload its contents or assign records to a farm.</p>
+    <section class="panel selection">
+      <div><label for="source-name">Original archive name</label><input id="source-name" value="all-datasets.zip" maxlength="240"></div>
+      <div><label class="button" for="archive-file">Choose ZIP archive ↗</label><input id="archive-file" type="file" accept=".zip,application/zip,application/octet-stream" class="file-input"></div>
+      <p class="caption">Large archives are inventoried by reading their directory. Individual members are decompressed only when requested. No source content is executed.</p>
+    </section>
+    <p id="status" role="status" aria-live="polite">Choose an archive to begin.</p>
+    <section id="inventory-section" hidden>
+      <div class="section-heading"><div><p class="eyebrow">01 / INVENTORY</p><h2>What is inside.</h2></div><button id="download-inventory" disabled>Download inventory JSON</button></div>
+      <div id="inventory-kpis" class="kpis"></div>
+      <div class="table-scroll"><table><thead><tr><th>Source path</th><th>Format</th><th>Original bytes</th><th>ZIP bytes</th><th>Method</th></tr></thead><tbody id="inventory-rows"></tbody></table></div>
+      <p id="inventory-caption" class="caption"></p>
+      <div class="actions"><button id="hash-archive">Calculate archive SHA-256</button></div>
+      <p id="hash-status" role="status" aria-live="polite">The archive checksum is measured separately from the directory inventory.</p>
+      <details><summary>Full inventory JSON</summary><pre id="inventory-json"></pre></details>
+    </section>
+    <section id="member-section" hidden>
+      <div class="section-heading"><div><p class="eyebrow">02 / SOURCE INSPECTION</p><h2>Read a source file.</h2></div></div>
+      <div class="panel controls"><label for="member-select">Archive member</label><select id="member-select"></select><div class="actions"><button id="inspect-member">Inspect source</button><button id="download-member" disabled>Download extracted source</button></div><p class="caption">Inspection and extraction accept one member up to 256 MiB. Preview text is limited to 16,000 characters. Full-table profiling retains its separate 20 MiB, 100,000-row and 2-million-cell limits; exclusions are recorded explicitly.</p></div>
+      <p id="member-status" role="status" aria-live="polite"></p>
+      <pre id="member-preview" class="source-preview"></pre>
+    </section>
+    <section id="profile-section" hidden>
+      <div class="section-heading"><div><p class="eyebrow">03 / TABLE PROFILES</p><h2>Measure the source.</h2></div><button id="profile-all">Profile supported members</button></div>
+      <p class="caption">CSV, TSV and JSON members are processed sequentially. Every accepted table is profiled in full. Unsupported formats or inputs beyond the stated limits are listed as exclusions, never silently sampled.</p>
+      <p id="profile-status" role="status" aria-live="polite"></p>
+      <div class="actions"><button id="download-profiles" disabled>Download derived profiles JSON</button></div>
+      <pre id="profiles-json"></pre>
+    </section>
+  </main>
+  <footer>Terraviva / Source values stay separate from farmer declarations and permissions.</footer>
+</body>
+</html>
