@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "start": "node server.cjs",
+    "pretest": "npm run report",
     "test": "node --test test/*.cjs",
     "build": "node scripts/build.cjs",
-    "report": "node scripts/build-report.cjs",
+    "report": "python3 scripts/prepare-reference.py && node scripts/build-report.cjs",
+    "prepare:data": "python3 scripts/prepare-reference.py",
     "stage:data": "python3 scripts/stage-datasets.py"
   },
   "engines": {

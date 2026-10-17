@@ -23,14 +23,19 @@ literal `true` or `false` when supplied.
   title?: string,
   summary?: [string],
   archive: {
-    filename: string, bytes: integer, sha256: 64-character hexadecimal string,
-    memberCount?: integer, uncompressedBytes?: integer
+    kind?: "zip" | "source-collection",
+    filename: string, bytes?: integer, sha256?: 64-character hexadecimal string,
+    memberCount?: integer, uncompressedBytes?: integer,
+    originalArchiveFilename?: string, inventoryBasis?: string,
+    inventoryComplete?: boolean
   },
   coverage: {
     fileCount?, parsedFileCount?, tableCount?, profiledTableCount?,
-    totalTableRows?, profiledRows?, complete?: boolean, notes?: [string]
+    totalTableRows?, profiledRows?, retrievedFileCount?, unretrievedFileCount?,
+    retrievedBytes?, complete?: boolean, notes?: [string]
   },
-  files: [{id, path, format?, bytes?, sha256?, status?, notes?: [string]}],
+  files: [{id, path, format?, bytes?, sha256?, status?,
+    retrievalStatus?: "retrieved" | "not-retrieved", notes?: [string]}],
   tables: [{
     id, name, fileId?, sourcePath?, pointer?, grain?,
     role?: "reference" | "unknown",
@@ -63,6 +68,33 @@ literal `true` or `false` when supplied.
   methods?: {version?, notes?: [string]}
 }
 ```
+
+## Original ZIP and extracted source collection
+
+The omitted or `"zip"` provenance kind requires the original ZIP's measured byte
+count and SHA-256. A separately retrieved folder uses `kind: "source-collection"`;
+it must not populate the ZIP-only `bytes`, `sha256`, `memberCount` or
+`uncompressedBytes` fields. Its `filename` is a collection label and an optional
+`originalArchiveFilename` records the expected ZIP's name without claiming that
+the ZIP was obtained.
+
+A source collection requires an explicit `inventoryBasis`, a literal
+`inventoryComplete` boolean, measured `coverage.retrievedFileCount` and
+`coverage.retrievedBytes`, and a retrieval status for every listed file. Each
+retrieved file must have its original byte count and SHA-256. Each unretrieved
+file must leave those measurements null or absent. Every table profile must cite
+a retrieved file. Retrieved count and byte totals must reconcile with the file
+inventory, and the parsed-file count cannot exceed retrieved files.
+
+`fileCount`, `unretrievedFileCount`, `tableCount` and `totalTableRows` describe the
+expected overall release. Keep them null when they are unknown. A partially
+observed folder listing is not a full inventory; rounded display sizes are not
+exact byte counts. `inventoryComplete: true` requires exact expected and
+unretrieved file counts and a complete file list. Incomplete inventory forces
+`status: "partial"`, even if every retrieved row has been profiled. The report
+shows measured retrieved counts prominently while retaining these limitations.
+
+## Profile measurements
 
 The documented `numeric`, `frequencies`, `dates` and `numericPairs` fields follow
 the existing Terraviva EDA engine. Include complete scalar summaries for every profiled field;
@@ -98,10 +130,12 @@ normalized into a different month.
 Do not infer that a table is a harvest
 ledger, or assign it to the current farmer, from the presence of numeric columns.
 
-Source evidence references use stable `fileId` and `tableId` values. The archive
-SHA-256 must be computed from the original ZIP bytes; it is distinct from each
-member's checksum and from the generated JSON analysis file. Any checksum that is
-not yet known must be obtained before publishing an archive report.
+Source evidence references use stable `fileId` and `tableId` values. In ZIP mode,
+the archive SHA-256 must be computed from the original ZIP bytes; it is distinct
+from each member's checksum and from the generated JSON analysis file. In
+source-collection mode, original-file checksums support the retrieved scope
+while the unavailable ZIP evidence remains explicitly unclaimed. No checksum may
+be inferred from decoded text, normalized rows or the generated report JSON.
 
 This schema does not authorize publication, third-party reuse, farm assignment,
 or commercial participation. It records analysis and provenance only.

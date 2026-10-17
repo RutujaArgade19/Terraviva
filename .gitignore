@@ -6,8 +6,16 @@ node_modules/
 dist/
 __pycache__/
 *.pyc
+*.sqlite3
+*.sqlite
 *.sqlite3-journal
 *.sqlite3-wal
 *.sqlite3-shm
+data/reference-base/
+data/source-metadata.json
+public/reference/
+public/data-report.html
+report/archive-analysis.json
+.reference-prepared.json
 
 

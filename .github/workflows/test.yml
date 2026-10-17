@@ -8,8 +8,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm run prepare:data
       - run: npm test
       - run: python3 test/stage-datasets.py
+      - run: python3 test/reference-base.py
+      - run: python3 test/reference-sqlite.py
+      - run: python3 test/prepare-reference.py
       - run: npm run build
 
 

@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-17T12:13:13.298121+00:00",
+  "scope": "All 28 retrieved source CSVs; original archive coverage remains unknown.",
+  "originalArchiveCoverage": "unknown",
+  "sourceCounts": {
+    "sourceFiles": 28,
+    "sourceBytes": 566600488,
+    "rows": 1754685,
+    "columnOccurrences": 804,
+    "pages": 103
+  },
+  "checks": {
+    "originalCsvBytesReconstructedAndSha256Matched": true,
+    "allSourceFragmentsReassembledAndSha256Matched": true,
+    "everyPublishedJsonCellComparedToOriginalCsv": true,
+    "allRowsAndSourceLinePositionsInRebuiltSQLiteMatchSavedSnapshot": true,
+    "installedRepoDataFilesMatchVerifiedStagingBytes": true,
+    "sourceSchemasIncludeBothRowAndPhysicalLineProvenance": true
+  },
+  "sourceCatalogSha256": "3c199acc66fc7a54cdce5d3174f3696b0a71368d54dd0aff06744b6b46738040",
+  "savedDatabaseSha256": "fe3a39fdd995432c977162a5818ee61fd858c7936d20cb2c5f4c36048fb87dde",
+  "rebuiltDatabaseSha256": "047e4b44f69dfdacb22a501fec85e1760f77de6282a48ec1563201d2b6f5d87b",
+  "sqliteByteLayoutNote": "Byte layouts and metadata differ between builder versions; all original table cells and row positions were compared directly.",
+  "operationAudit": {
+    "sourceRows": 793738,
+    "candidateKeys": 721334,
+    "repeatedKeyGroups": 72404,
+    "conflictingKeyGroups": 0,
+    "missingKeyRows": 0
+  },
+  "sourceTables": [
+    {
+      "path": "combined/combined_animal_product_ready.csv",
+      "rows": 97780,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge1_farm_reporting_ready.csv",
+      "rows": 200000,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2017_part_3.csv",
+      "rows": 72216,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2018_part_3.csv",
+      "rows": 71500,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2019_part_3.csv",
+      "rows": 72725,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2020_part_3.csv",
+      "rows": 72198,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2021_part_3.csv",
+      "rows": 72404,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2022_part_3.csv",
+      "rows": 72741,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge2_parcel_operations_ready_2023_part_3.csv",
+      "rows": 72302,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_challenge3_sales_certification_ready.csv",
+      "rows": 354614,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_column_provenance.csv",
+      "rows": 952,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_crop_mapping.csv",
+      "rows": 7,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_holding_region.csv",
+      "rows": 20000,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_livestock_static_ready.csv",
+      "rows": 33516,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_operation_records_2021_part_3.csv",
+      "rows": 72404,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_operation_records_2024_part_3.csv",
+      "rows": 70824,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_operation_records_2025_part_3.csv",
+      "rows": 72216,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_operation_records_2026_part_3.csv",
+      "rows": 72208,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_quality_issues.csv",
+      "rows": 15,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_region_assignment.csv",
+      "rows": 8,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_region_climate_normals.csv",
+      "rows": 8,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_region_crop_availability.csv",
+      "rows": 56,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_sale_certificate_link.csv",
+      "rows": 27827,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_sale_certificate_summary.csv",
+      "rows": 26088,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_sql_examples.csv",
+      "rows": 8,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_subsidy_summary.csv",
+      "rows": 200000,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "combined/combined_table_provenance.csv",
+      "rows": 61,
+      "allCellsAndSourceLinesIdentical": true
+    },
+    {
+      "path": "crop/crop_sources.csv",
+      "rows": 7,
+      "allCellsAndSourceLinesIdentical": true
+    }
+  ]
+}

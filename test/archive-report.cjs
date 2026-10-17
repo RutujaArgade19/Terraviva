@@ -140,3 +140,43 @@ test('numeric population counts, Pearson bounds and calendar buckets cannot over
   for(const mutate of invalid){const data=fixture();mutate(data);assert.throws(()=>validateArchive(data),/integer|exceeds|Pearson|calendar/);}
   const leap=fixture();leap.tables[0].columns[0].dates={dayCounts:[{date:'2024-02-29',count:2}]};assert.doesNotThrow(()=>validateArchive(leap));
 });
+
+function collectionFixture(){
+  const data=fixture();
+  data.archive={kind:'source-collection',filename:'synthetic-extracted-folder',originalArchiveFilename:'unretrieved-synthetic.zip',inventoryBasis:'Invented partial folder listing for isolated tests.',inventoryComplete:false};
+  data.coverage={...data.coverage,fileCount:null,tableCount:null,totalTableRows:null,retrievedFileCount:1,unretrievedFileCount:null,retrievedBytes:42};
+  data.files[0].retrievalStatus='retrieved';
+  data.files.push({id:'unretrieved',path:'synthetic-unretrieved.csv',retrievalStatus:'not-retrieved',status:'not-retrieved'});
+  return data;
+}
+
+test('source collections show measured retrieval while leaving unknown release scope explicit',()=>{
+  const {html,archiveJSON}=applyArchive(template,collectionFixture());
+  assert.match(html,/RETRIEVED SOURCE FILES<\/p><strong>1<\/strong>/);
+  assert.match(html,/TABLE PROFILES<\/p><strong>2<\/strong>/);
+  assert.match(html,/Full-release file count not established/);
+  assert.match(html,/Full-release table coverage not established/);
+  assert.match(html,/Original ZIP provenance is not claimed/);
+  assert.match(html,/Original source-file checksums \(1\)/);
+  assert.match(html,/Listing size only; bytes not retrieved/);
+  assert.match(html,/archive-evidence-banner is-partial/);
+  assert.doesNotMatch(html,/Hash of original ZIP bytes/);
+  assert.equal(JSON.parse(archiveJSON).coverage.fileCount,null);
+});
+
+test('collection provenance rejects invented ZIP evidence, unretrieved measurements and inconsistent totals',()=>{
+  const invalid=[
+    data=>data.archive.sha256='c'.repeat(64),
+    data=>data.archive.bytes=0,
+    data=>delete data.archive.inventoryBasis,
+    data=>data.coverage.retrievedBytes=43,
+    data=>data.coverage.retrievedFileCount=2,
+    data=>data.coverage.parsedFileCount=2,
+    data=>delete data.files[0].sha256,
+    data=>data.files[1].bytes=12,
+    data=>data.tables[0].fileId='unretrieved',
+    data=>{data.status='complete';data.coverage.complete=true;},
+    data=>data.archive.inventoryComplete=true
+  ];
+  for(const mutate of invalid){const data=collectionFixture();mutate(data);assert.throws(()=>validateArchive(data),/ZIP|inventory|reconcile|exceeds|byte count|Retrieved|Unretrieved|retrieved file/);}
+});

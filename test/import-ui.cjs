@@ -204,3 +204,21 @@ test('an unpublished table without a reason is identified without inventing a ca
     assert.match(container.html,/unexplained:<\/strong> No publication reason was supplied in the catalogue\./);
   });
 });
+
+test('reference collection opens a separate all-row explorer without assigning its rows to the current farm',async()=>{
+  await withImportView({status:'reference-ready',datasets:[],reference:{sourceFiles:28,rows:1754685,catalog:'/reference/index.json'}},async({container})=>{
+    assert.match(container.html,/28 sources · 1,754,685 source-table rows/);
+    assert.match(container.html,/href="\/reference-data\.html"/);
+    assert.match(container.html,/collection remains unassigned/);
+    assert.match(container.html,/counts do not represent distinct farms/);
+    assert.doesNotMatch(container.html,/archive has not been added|id="import-load-source"|id="import-confirm"/);
+    assert.ok(container.querySelector('#import-file'));
+  });
+});
+
+test('untrusted reference manifest cannot inject a link or invented numeric counts',async()=>{
+  await withImportView({status:'reference-ready',datasets:[],reference:{sourceFiles:'<script>',rows:1,href:'https://other.test'}},async({container})=>{
+    assert.doesNotMatch(container.html,/<script>|https:\/\/other\.test|Hackathon reference collection/);
+    assert.match(container.html,/hackathon collection is available in the reference explorer/);
+  });
+});

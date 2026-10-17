@@ -1,159 +1,138 @@
-# Base data and staging contract
+# Terraviva reference data
 
-## Status of this revision
+## What is included
 
-`all-datasets.zip` has been identified by its Windows path, but the archive bytes have not been supplied here. The repository contains the staging schema and executable pipeline, **not a populated dataset or placeholder database**. The public app catalog explicitly reports `awaiting-source-archive`.
+This snapshot contains 28 retrieved CSV source files: **566,600,488 original bytes**, **1,754,685 source-table rows**, and **804 field occurrences**. Original bytes are preserved in the committed lossless `source-bundle/`. Source preparation generates per-source gzip fragments under `reference-base/sources/` and every parsed row and column under `public/reference/`.
 
-Run the staging command once the actual source is available. Source-specific relationships, units, licences and analytical conclusions still require inspection of those files.
+The inputs were recovered individually from the supplied OneDrive collection. The original ZIP, its SHA-256 and its complete contents inventory remain unknown. Forty-four additional observed filenames are listed as unretrieved in the report. “Complete” in the catalog means complete for the 28 retrieved files. Source-table totals count repeated exports and projections as well as distinct records.
 
-## Why SQLite
+This is reference data. Its holding identifiers do not identify the signed-in farmer, and the snapshot creates no farm assignment, access grant or commercial-use consent. The original source's synthetic and static status flags remain part of the data.
 
-The base data is an offline, versioned snapshot. SQLite provides one queryable file containing source provenance, table/column metadata and all staged rows. Original parsed values remain intact until a documented transformation is warranted. This is a useful starting point when an archive's schemas are not yet known.
+## SQL and storage design
 
-The app consumes generated JSON views. Live farmer records and permission changes remain in the existing encrypted Redis depot. Neither the app nor Vercel functions mutate this base SQLite file.
+SQLite is the portable analytical base. Each source table keeps its original columns, source row positions and lexical values. Tables can be joined using documented keys after checking grain, units and coverage. The database can be opened without a service, account or network connection.
 
-## Commands
+The live farmer depot continues to use the existing encrypted Redis storage. The static reference browser reads generated pages. Vercel does not mutate the reference SQLite file.
 
-Run from a checkout of this repository with Python 3.10+:
-
-```sh
-python3 scripts/stage-datasets.py --input /path/to/all-datasets.zip
-```
-
-`--input` also accepts one CSV/TSV/JSON file or a directory. For a Windows checkout:
-
-```powershell
-py -3 scripts/stage-datasets.py --input "C:\Users\HAL900\Downloads\all-datasets.zip"
-```
-
-The default output is `data/staged/`. To create the app's public views as well:
-
-```sh
-python3 scripts/stage-datasets.py --input /path/to/all-datasets.zip --publish-app --replace
-```
-
-`--replace` is needed to update the existing awaiting-source manifest and to replace an existing managed snapshot. Generated-file checksums protect edits and unrelated files; it is not a blanket overwrite flag. Use `--output-dir` and `--app-dir` for isolated destinations. Do not overlap input, output and app directories.
-
-Review the source and generated outputs before committing. This repository is public. The SQLite snapshot includes original source bytes, so committing it publishes those bytes too. The app's permission controls govern the private farmer store; they do not restrict public GitHub files or public dataset views.
-
-## Generated artifacts
-
-| Path | Meaning |
+| Path | Contents |
 | --- | --- |
-| `data/staged/base.sqlite3` | SQLite snapshot with original source bytes, metadata and rows |
-| `data/staged/catalog.json` | Build/source identifiers, checksums, table inventory, counts, skipped files and view availability |
-| `data/staged/views/<dataset-id>.json` | Complete app-compatible table view when within the view limits |
-| `public/datasets/manifest.json` | App catalog, only updated with `--publish-app` |
-| `public/datasets/<dataset-id>.json` | Published complete reference table, only with `--publish-app` |
+| `data/source-bundle/manifest.json` | Committed checksums and byte lengths for all 111 archive fragments and 30 original members, plus expected data dimensions |
+| `data/source-bundle/source.tar.xz.partNNNN` | Committed consecutive fragments of the 55,462,120-byte tar+xz archive; each fragment is at most 500,000 bytes |
+| `data/source-metadata.json` | Prepared source identity, column definitions and full measured source profiles |
+| `data/reference-base/catalog.json` | Source dimensions, hashes, grain, page descriptors and storage locations |
+| `data/reference-base/sources/<id>/manifest.json` | Ordered fragment sizes and hashes, full compressed hash, and original CSV hash |
+| `data/reference-base/sources/<id>/source.csv.gz.partNNNN` | Consecutive fragments of a single gzip stream, at most 4 MiB each |
+| `data/reference-base/schemas/<id>.sql` | Explicit per-source SQL table definition |
+| `public/reference/index.json` | App catalog for all 28 retrieved source tables |
+| `public/reference/<id>/page-NNNNNN.json.gz` | Full source rows, ordered and paginated; every original source column is retained |
+| `public/reference/<id>/profile.json` | Complete source profile, with column summaries and quality context |
+| `report/archive-analysis.json` | Measured collection analysis, findings, relationships and source inventory |
 
-Generator ownership markers accompany the output directories. Preserve them when committing staged outputs; replacement validation uses their file hashes. Unsupported documents and operating-system metadata are listed as skipped and are not executed or opened. The original archive itself remains an external source; its SHA-256 is recorded when staging a ZIP. Exact bytes of each supported source file are retained inside SQLite.
+The paths below `data/reference-base/` and `public/reference/`, plus the source metadata and report analysis JSON, are generated and excluded from Git. The committed bundle contains 28 original CSV files and two metadata/analysis JSON files. No source table is omitted to make the package smaller.
 
-A table that cannot be exposed within the app-view limits remains complete in SQLite and is listed as `requires-split`. No first-N-row sample masquerades as a full table. The browser report has its own explicit limits, and harvest imports have the narrower limit of 1,000 rows.
+The downloadable `Terraviva_Reference_Data_SQLite.zip` is supplied separately. It contains the closed SQLite database, delivery metadata, checksums and a README. The repository preserves its reproducible inputs instead of committing the 766 MB database as one Git object.
 
-## SQLite schema
+## Reproduce and verify
 
-The executable definition is [schema.sql](schema.sql), schema version 1.
+Use Python 3.11+ from the repository root. Outputs must be new locations; the scripts refuse accidental replacement.
 
-| Table or view | Grain and key | Important fields |
-| --- | --- | --- |
-| `build_metadata` | One value per metadata key | Generator/version, build identity, origin, numeric policy, effective limits |
-| `source_files` | One supported file per logical source path | `source_file_id`, `logical_path`, `byte_size`, `sha256`, `encoding`, `source_bytes` |
-| `datasets` | One discovered table in a source file | `dataset_id`, source foreign key, JSON table pointer, shape, context, row/column counts, view availability |
-| `columns` | One flattened field path per dataset | Ordinal, JSON Pointer, observed source types, conservative inferred type, missing/distinct counts, profile JSON |
-| `rows` | One original parsed row at a one-based source position | `dataset_id`, `row_index`, CSV source line when available, row SHA-256, exact `row_json` |
-| `dataset_overview` | Convenient join of dataset and source metadata | Source filename/hash, table pointer, shape counts and view status |
+First prepare the full source package and app views from the committed bundle:
 
-Foreign keys connect rows and columns to datasets, then datasets to source files. `(dataset_id, row_index)` identifies a source observation. No inferred farm, crop, date, amount, currency, commercial consent or business-event key is created.
+```sh
+npm run prepare:data
+```
 
-### Reconciliation queries
+Equivalent: `python3 scripts/prepare-reference.py`. `npm run build` also performs this step automatically. The preparer validates all fragment hashes, the full compressed archive, member byte counts and original SHA-256 hashes. Archive extraction permits only declared regular files and safe relative paths. A completed preparation is cached, with source and output hashes rechecked on reuse. Edited generated files are preserved unless `--rebuild` is explicitly requested; unexpected extra files require inspection before continuing.
 
-After the source has been staged, these queries inspect the actual snapshot:
+Restore the exact original CSV files, checking both fragment and original-source checksums:
+
+```sh
+python3 data/restore-sources.py \
+  --base data/reference-base \
+  --output-dir /tmp/terraviva-original-csv
+```
+
+Rebuild the compressed source package, paginated app views, profiles and schemas:
+
+```sh
+python3 scripts/build-reference-base.py \
+  --input /tmp/terraviva-original-csv \
+  --metadata data/source-metadata.json \
+  --output-dir /tmp/terraviva-reference-build
+```
+
+Verify the prepared package and every generated app row against its preserved source:
+
+```sh
+python3 scripts/verify-reference-build.py \
+  --base data/reference-base \
+  --reference public/reference
+```
+
+Build a new queryable SQLite snapshot:
+
+```sh
+python3 scripts/build-reference-sqlite.py \
+  --output /tmp/terraviva-reference.sqlite3
+```
+
+The default SQL input is `data/reference-base`. A rebuilt database may have a different binary layout across SQLite versions; exact original CSV checksums, source row equality and SQL integrity are the authoritative reproducibility checks. The separately delivered database has its own fixed byte checksum in its ZIP.
+
+The older general-purpose `scripts/stage-datasets.py` is retained for new small CSV/TSV/JSON inputs or a future complete ZIP. It uses a different generic row-envelope schema and explicit limits. It is not the build path for this recovered collection. Its `/datasets/` import catalog is separate from the full `/reference/` explorer.
+
+## SQLite contract
+
+| Table or view | Meaning |
+| --- | --- |
+| `source_catalog` | One entry per retrieved source, with source path/hash, table name, shape, preservation and measured profile JSON |
+| `source_columns` | One entry per source column, with original ordinal/name, storage type and measured profile JSON |
+| `build_metadata` | Generator, collection scope, lexical/null policy and audit metadata |
+| Original CSV filename stems | All source rows and source columns; `_row_number` and `_source_line` provide row provenance |
+| `operation_core_all` | Every source copy of the 17 shared operation fields, with source provenance |
+| `operation_key_audit` | Candidate-key repetitions and exact shared-field variant counts |
+| `operation_core_deduplicated` | One common-field record per audited operation key, created only when key completeness and equality checks pass |
+
+Only the literal CSV marker `\N` becomes SQL/JSON null. Empty strings, whitespace, zero, `NA`, leading zeros and decimal spelling remain lexical source text. `_row_number` is the one-based logical CSV data row; `_source_line` is the physical source line on which that record ends. Numeric analysis requires an explicit cast and a verified field/unit definition. Identifier fields should remain text.
+
+Source SQL examples are inert text. No build executes SQL supplied by a source row.
+
+### Useful queries
 
 ```sql
-SELECT name, logical_path, table_pointer, row_count, column_count,
-       duplicate_extra_rows, view_status
-FROM dataset_overview
-ORDER BY logical_path, table_pointer;
+SELECT source_path, table_name, row_count, column_count, source_sha256
+FROM source_catalog
+ORDER BY source_path;
 
-SELECT d.name, d.row_count AS declared_rows, COUNT(r.row_index) AS stored_rows
-FROM datasets AS d
-LEFT JOIN rows AS r USING (dataset_id)
-GROUP BY d.dataset_id
-HAVING declared_rows <> stored_rows;
+SELECT dataset_id, ordinal, name, storage_type
+FROM source_columns
+ORDER BY dataset_id, ordinal;
 
-SELECT d.name, c.display_name, c.inferred_type,
-       c.missing_count, c.distinct_count
-FROM columns AS c
-JOIN datasets AS d USING (dataset_id)
-ORDER BY d.name, c.ordinal;
+SELECT key, value_json FROM build_metadata;
 
-PRAGMA integrity_check;
-PRAGMA foreign_key_check;
+SELECT COUNT(*) AS source_copies FROM operation_core_all;
+SELECT COUNT(*) AS audited_keys FROM operation_core_deduplicated;
+SELECT * FROM operation_key_audit WHERE core_variants > 1;
+PRAGMA quick_check;
 ```
 
-The reconciliation query should return no discrepancies. For a field that actually exists in an inspected table, an explicit extraction can use `json_extract(row_json, '$.field_name')`. Choose fields and units from the source, not from assumed domain labels. SQLite numeric extraction may coerce arbitrary-precision JSON numbers; keep identifiers and precision-sensitive values as source text when exactness matters.
+In the delivered snapshot, the operation union has **793,738 source copies** and **721,334 distinct candidate keys**. The candidate key is `(operation_type, source_operation_id)`. All 72,404 repeated keys have exactly equal values in the 17 shared fields; no missing keys or conflicting variants were found. These are source-key checks, not independent validation of real-world agricultural events. Original enriched rows remain available even when the common-field view is deduplicated.
 
-## Source semantics and precision
+## Interpretations the app must preserve
 
-CSV strings retain leading zeros, whitespace and their original cell text. JSON number lexemes are preserved in `row_json` and generated views, including large integers and precise decimal notation. Original raw bytes remain the final provenance authority. Objects are serialized in stable key order for row fingerprints; CSV source line numbers support reconciliation.
+- **Farm reporting:** 20,000 holdings over 2017–2026, with 200,000 holding-year rows. The tested structure and labour fields are static within holdings. Farm financial values are marked synthetic and not regionally recalibrated. Historical financial variation is not evidence of observed farm performance.
+- **Subsidies:** the 200,000-row subsidy export is an exact ten-field projection of farm reporting. Adding its totals to farm reporting would count the same information twice.
+- **Operations:** seven enriched planting partitions contain 506,086 source keys. Only `part_3` was retrieved; this is not a complete history of all operations. The narrow 2021 file repeats the enriched 2021 core exactly. Campaign year and calendar operation year can differ.
+- **Animal products:** milk is measured in tonnes; eggs are measured in thousands of pieces. Their quantities and per-head metrics must not be pooled across units. Source denominators are static and frequently fractional.
+- **Livestock:** 33,516 holding/category rows have null year and a static temporal basis. They are not annual herd observations.
+- **Sales and certificates:** 354,614 transaction identifiers are unique. The 27,827 certificate links cover 26,088 transactions; 1,739 transactions have two links. A flat transaction-to-certificate join therefore multiplies some sale amounts. No parcel or batch lineage is established by that link alone.
+- **Regional context:** eight assigned regions and retrospective climate normals provide context. Regional assignment is synthetic, and repeated context rows are not independent climate observations. The retrieved collection does not supply a measured NDVI/monitoring history or real geographic parcel positioning.
 
-Missingness counts absent fields, nulls and whitespace-only strings. Zero, false and the literal string `NA` are present values. Column types are inferred from observed values and field names; they do not certify units or domain meaning. Identifier-like columns are kept distinct from continuous measures.
+The report contains the exact tests, field profiles, units, null patterns, outlier review candidates, source provenance and coverage qualifications. Numeric associations describe this source collection; they do not establish causation or representativeness.
 
-Exact staged-row fingerprints compare canonical source representations while retaining numeric lexemes. Thus JSON `1` and `1.0` can have different staged fingerprints even though a downstream numeric analysis treats their values as equal. Neither form of exact duplication proves whether two rows describe the same real-world event. The stager retains duplicates and reports their count.
+## App behavior and permissions
 
-CSV header duplicates, blank headers, inconsistent row widths, malformed quoting, ambiguous delimiters, JSON duplicate keys, invalid encodings and malformed supported sources cause the staging operation to fail. No partial batch replaces the previous output. UTF-8 is supported with or without a BOM; UTF-16 requires an explicit BOM. The browser app accepts UTF-8 views/files.
+`/reference-data.html` lists every retrieved table. It verifies compressed and decoded page hashes, displays bounded pages, supports a cancellable scan over the complete selected source, and opens all fields for a selected row. Display limits are identified explicitly; the stored collection is not sampled.
 
-## Reference-data wrapper
+Reference sources never populate the farmer ledger automatically. The separate harvest-import workflow still requires compatible fields, a valid farm mapping, a preview and explicit confirmation. Imports preserve existing permissions; they cannot create commercial participation.
 
-Each generated table view has this structure:
-
-```json
-{
-  "_terravivaDataset": {
-    "id": "deterministic dataset identifier",
-    "role": "reference",
-    "farmerAssignment": null,
-    "source": {
-      "file": "original logical source path",
-      "sha256": "source file checksum",
-      "tablePointer": "/path/to/source/table"
-    },
-    "sourceContext": {}
-  },
-  "records": []
-}
-```
-
-This is a structure example only. A generated view's `records` array contains all rows of that table. `sourceContext` retains scalar and object metadata from JSON ancestors while recursively omitting array-valued fields. It preserves, for example, a nested farm claim even when neighbouring metadata contains an array, without manufacturing extra analytical tables. The full source envelope is recoverable from `source_bytes`.
-
-The app checks explicit farm claims in rows and source context before a harvest import. A reference dataset can be analysed without assigning it to a farmer. Explicit mapping, validation, preview and confirmation are required before compatible records are added to the selected depot. Existing grants and commercial preferences remain in effect; the base-data snapshot cannot grant permission.
-
-## Bounds and large sources
-
-Defaults for offline staging:
-
-| Bound | Default |
-| --- | ---: |
-| Total supported expanded source data | 200 MiB |
-| One expanded source file | 50 MiB |
-| Rows per table | 100,000 |
-| Flattened columns per table | 500 |
-| Profiling cells per table | 2,000,000 |
-| JSON tables per source | 256 |
-| JSON depth | 100 |
-| Flattened object depth | 5 |
-| Complete public JSON view | 1 MiB |
-
-`--max-expanded-mib`, `--max-member-mib`, `--max-rows`, `--max-columns` and `--max-cells` allow a deliberate larger offline staging run. Browser-compatible views remain bounded separately: 1 MiB, 100,000 rows, 250 columns and 2,000,000 cells. A valid reference view may exceed the 1,000-row harvest-batch limit and still be useful for analysis.
-
-If the actual archive exceeds practical Git repository size or these limits, partition it explicitly or keep full data in durable object/database storage and commit its schema, manifests and approved app views. Make that choice using the observed archive sizes and contents.
-
-## Validation
-
-```sh
-python3 test/stage-datasets.py
-npm test
-npm run build
-```
-
-Staging tests create small labelled synthetic fixtures in temporary directories. They are not base data and do not populate the real app catalog. The staging command also runs SQLite foreign-key and integrity checks before installing a snapshot.
+The source snapshot, report and generated views are public when committed/deployed in this public project. Farmer permission controls apply to private depot records, not these static reference files. Publisher provenance records a hackathon-participant redistribution declaration; it is a source declaration, not an independently verified licence audit or an unrestricted public distribution licence.

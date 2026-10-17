@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore Terraviva’s retrieved EU Agri-Hackathon reference data, with verified source records, field definitions and clear coverage.">
+  <title>Terraviva · The reference atlas</title>
+  <link rel="stylesheet" href="/reference-data.css">
+  <script src="/reference-data.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#explorer">Skip to the records</a>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Terraviva home"><span class="brand-mark" aria-hidden="true">◒</span><span>terraviva<small>ROOTED IN TRUST</small></span></a>
+    <nav aria-label="Main navigation"><a href="/">Farmer workspace</a><a class="report-link" href="/data-report.html">Read the data report <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy"><p class="eyebrow">TERRAVIVA / THE REFERENCE ATLAS</p><h1 id="hero-title">Get to know<br><em>the data beneath.</em></h1><p class="hero-deck">Explore the retrieved hackathon collection, one source record at a time. Follow its structure, read the field definitions, and see where the evidence ends.</p><a class="text-link" href="#explorer">Explore the records <span aria-hidden="true">↓</span></a></div>
+      <div class="landscape" aria-hidden="true"><div class="landscape-sun"></div><div class="landscape-line line-one"></div><div class="landscape-line line-two"></div><div class="landscape-line line-three"></div><span>RECORDS WITH ROOTS.</span><small>Source → structure → understanding</small></div>
+    </section>
+    <section class="collection-summary" aria-label="Retrieved collection">
+      <div><span class="metric-label">RETRIEVED SOURCES</span><strong id="source-count">—</strong><small>Verified files in this collection</small></div>
+      <div><span class="metric-label">SOURCE-TABLE ROWS</span><strong id="row-count">—</strong><small>Across all retrieved files</small></div>
+      <div><span class="metric-label">ORIGINAL SOURCE SIZE</span><strong id="source-bytes">—</strong><small>Before browser packaging</small></div>
+      <div class="summary-note"><span class="status-dot"></span><strong>Reference data · unassigned</strong><p>Browsing does not add records to a farmer’s depot or grant permission to use their data.</p></div>
+    </section>
+    <p class="coverage-note" id="coverage-note"><strong>Coverage is partial.</strong> The original release has not been fully inventoried. Source files overlap; their combined row count is not a count of distinct farms or independent observations.</p>
+    <div id="catalog-status" class="catalog-status" role="status" aria-live="polite">Loading the source catalogue…</div>
+    <section class="explorer" id="explorer" aria-labelledby="explorer-title" hidden>
+      <aside class="source-panel">
+        <p class="eyebrow">01 / CHOOSE A SOURCE</p><h2 id="explorer-title">A closer look.</h2>
+        <label for="dataset-select">Source table</label><select id="dataset-select"></select>
+        <p id="dataset-description" class="source-description"></p>
+        <dl class="source-facts" id="source-facts"></dl>
+        <details class="provenance"><summary>Source identity &amp; integrity</summary><div id="source-provenance"></div></details>
+        <a class="text-link side-report" href="/data-report.html#archive-evidence">Read the full analysis <span aria-hidden="true">↗</span></a>
+        <div class="reading-note"><span class="note-number">i</span><div><strong>Read the source in context.</strong><p id="interpretation-note"></p></div></div>
+      </aside>
+      <div class="records-panel">
+        <div class="records-heading"><div><p class="eyebrow">02 / EXPLORE THE RECORDS</p><h2 id="records-title">Source records</h2></div><span class="integrity-pill" id="integrity-status">Checksums checked on load</span></div>
+        <form id="filter-form" class="filter-form">
+          <div class="filter-grid">
+            <label>Operation<input id="filter-operation" type="text" list="operation-values" placeholder="All operations" autocomplete="off"><datalist id="operation-values"></datalist></label>
+            <label>Country<input id="filter-country" type="text" list="country-values" placeholder="All countries" autocomplete="off"><datalist id="country-values"></datalist></label>
+            <label>Reporting / campaign year<input id="filter-year" type="text" list="year-values" placeholder="All source years" autocomplete="off"><datalist id="year-values"></datalist></label>
+            <label>Crop / product<input id="filter-crop" type="text" list="crop-values" placeholder="All crops / products" autocomplete="off"><datalist id="crop-values"></datalist></label>
+          </div>
+          <div class="filter-bottom"><label class="search-field">Find text in any field<input id="filter-text" type="search" placeholder="An identifier, place, or source value…" maxlength="160" autocomplete="off"></label><div class="filter-actions"><button class="primary" type="submit" id="apply-filters">Search this source</button><button class="quiet" type="button" id="clear-filters">Clear</button><button class="quiet cancel" type="button" id="cancel-scan" hidden>Cancel</button></div></div>
+          <p class="filter-help" id="filter-help">Category filters match complete values without regard to letter case. Text search matches part of a value. Each search scans all rows in this source.</p>
+        </form>
+        <div class="work-status" id="work-status" role="status" aria-live="polite"></div>
+        <div class="results-top"><p id="result-description"></p><label class="column-picker">Table columns<select id="column-mode"><option value="overview">Overview</option><option value="all">All fields</option></select></label></div>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Source records; scroll horizontally to see more fields"><table id="records-table"><caption class="sr-only">Verified source records. Open a record for all fields and definitions.</caption><thead id="records-head"></thead><tbody id="records-body"></tbody></table></div>
+        <div class="empty-state" id="empty-state" hidden><span aria-hidden="true">◌</span><h3>No matching records</h3><p>Try another source value or clear the filters.</p></div>
+        <div class="pagination"><button type="button" class="quiet" id="previous-page">← Previous</button><p id="page-description"></p><button type="button" class="quiet" id="next-page">Next →</button></div>
+        <p class="table-footnote">Source record numbers exclude the CSV header. Values retain their original text; <span class="null-value">NULL</span> and empty text are shown separately. Open any record to inspect every field.</p>
+      </div>
+    </section>
+    <section class="method-strip"><div><p class="eyebrow">HOW TO READ THIS COLLECTION</p><h2>Every row has a context.</h2></div><div><h3>Keep the grain in view.</h3><p>A holding-year, a sale, and a parcel operation describe different things. Repeated views and one-to-many joins can inflate totals.</p></div><div><h3>Read the status fields.</h3><p>These sources include synthetic values, static inventories, and regional context. Their presence does not establish an observed farm measurement or commercial permission.</p></div></section>
+  </main>
+  <footer><a class="brand-word" href="/">terraviva</a><span>Farmer data. Farmer control.</span><a href="/data-report.html">Full data report ↗</a></footer>
+  <dialog id="record-dialog" aria-labelledby="record-title"><div class="dialog-header"><div><p class="eyebrow">THE COMPLETE SOURCE RECORD</p><h2 id="record-title">Record details</h2></div><button class="quiet" type="button" id="close-record" aria-label="Close record details">Close ×</button></div><p id="record-context"></p><div id="record-fields" class="record-fields"></div></dialog>
+</body>
+</html>

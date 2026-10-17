@@ -88,7 +88,7 @@ function tableHTML(rows,columns,limit=8){
 }
 function issueHTML(issues){return issues?.length?'<ul class="import-issues">'+issues.slice(0,30).map(issue=>'<li>'+escape(typeof issue==='string'?issue:((issue.row!==undefined?'Row '+issue.row+' · ':'')+(issue.field?issue.field+': ':'')+(issue.message||JSON.stringify(issue))))+'</li>').join('')+'</ul>'+(issues.length>30?'<p class="muted">Showing 30 of '+issues.length+' issues.</p>':''):''}
 function create(hooks){
-  let draft={},catalog={state:'idle',datasets:[],status:'',unpublished:[],error:''};
+  let draft={},catalog={state:'idle',datasets:[],status:'',unpublished:[],reference:null,error:''};
   const reset=()=>{draft={name:'',bytes:null,analysis:null,tableIndex:null,mapping:{},claims:[],reference:false,plan:null,rows:null,preview:null,result:null,error:'',issues:[],context:null}};
   reset();
   const context=()=>hooks.getContext();
@@ -128,6 +128,7 @@ function create(hooks){
       catalog.datasets=manifest.datasets.filter(entry=>entry&&typeof entry.id==='string'&&typeof entry.name==='string'&&typeof entry.file==='string');
       catalog.status=typeof manifest.status==='string'?manifest.status:'';
       catalog.unpublished=Array.isArray(manifest.unpublishedDatasets)?manifest.unpublishedDatasets:[];
+      catalog.reference=manifest.reference&&Number.isSafeInteger(manifest.reference.sourceFiles)&&manifest.reference.sourceFiles>=0&&Number.isSafeInteger(manifest.reference.rows)&&manifest.reference.rows>=0?{sourceFiles:manifest.reference.sourceFiles,rows:manifest.reference.rows}:null;
       catalog.state='ready';
     }catch(error){catalog.state='error';catalog.error=error.message}
     hooks.refresh();
@@ -195,11 +196,13 @@ function create(hooks){
     html+='<div class="import-destination"><span class="badge">'+(destination.connected?'Private pilot depot':'Browser demo')+'</span><strong>Destination: '+escape(destination.farm)+'</strong><span>'+(destination.connected?'Confirmed imports are stored in your connected depot.':'Confirmed imports stay in this browser.')+'</span></div>';
     html+='<article class="card space"><p class="eyebrow">01 / SOURCE</p><h3>Choose harvest data for this farm</h3><p class="muted">CSV or JSON · up to 1 MiB · 1,000 rows per batch. Regional statistics and reference tables can be explored in the full report; they are not individual harvest declarations.</p>';
     if(catalog.state==='ready'){
-      html+='<p class="import-note"><strong>Repository catalogue:</strong> '+catalog.datasets.length+' available table'+(catalog.datasets.length===1?'':'s')+' · '+catalog.unpublished.length+' unpublished table'+(catalog.unpublished.length===1?'':'s')+'.</p>';
+      if(catalog.reference)html+='<div class="import-note"><strong>Hackathon reference collection · '+catalog.reference.sourceFiles.toLocaleString('en-GB')+' sources · '+catalog.reference.rows.toLocaleString('en-GB')+' source-table rows.</strong><p>Explore the retrieved files, filter every row, and inspect field definitions. Sources can overlap; these counts do not represent distinct farms. This collection remains unassigned and does not change your depot or permissions.</p><a class="link" href="/reference-data.html">Explore reference data ↗</a></div>';
+      html+='<p class="import-note"><strong>'+(catalog.reference?'Harvest import catalogue':'Repository catalogue')+':</strong> '+catalog.datasets.length+' available table'+(catalog.datasets.length===1?'':'s')+' · '+catalog.unpublished.length+' unpublished table'+(catalog.unpublished.length===1?'':'s')+'.</p>';
       if(catalog.datasets.length)html+='<div class="import-catalog"><label>Repository source<select id="import-catalog"><option value="">Choose an available source</option>'+catalog.datasets.map((entry,index)=>'<option value="'+index+'">'+escape(entry.name)+(Number.isFinite(entry.rows)?' · '+entry.rows+' rows':'')+'</option>').join('')+'</select></label><button class="link" id="import-load-source">Load selected source</button></div>';
       else {
         const message=catalog.status==='requires-split'||catalog.unpublished.length
           ?'Source data has been staged, but '+(catalog.unpublished.length?catalog.unpublished.length+' table(s)':'the available tables')+' need splitting before they can be offered in this catalogue. You can analyse a local file in the full report, or provide a smaller file here.'
+          :catalog.reference||catalog.status==='reference-ready'?'The hackathon collection is available in the reference explorer. To add your own harvest records to this farm, choose a local file below.'
           :catalog.status==='awaiting-source-archive'?'The source archive has not been added yet. You can choose a local CSV or JSON file below.'
           :'No browser-ready source files are listed in this catalogue. You can choose a local CSV or JSON file below.';
         html+='<p class="import-note">'+escape(message)+'</p>';
