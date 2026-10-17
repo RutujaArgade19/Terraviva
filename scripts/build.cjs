@@ -1,0 +1,1 @@
+const fs=require('node:fs');fs.mkdirSync('dist',{recursive:true});for(const f of fs.readdirSync('public'))fs.copyFileSync('public/'+f,'dist/'+f);console.log('Built static assets. Vercel serves api/ as serverless functions.');

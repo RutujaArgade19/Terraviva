@@ -1,0 +1,13 @@
+{
+  "name": "terraviva",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node --test test/*.cjs",
+    "build": "node scripts/build.cjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
