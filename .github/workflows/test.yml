@@ -9,5 +9,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
+      - run: python3 test/stage-datasets.py
       - run: npm run build
+
 

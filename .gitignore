@@ -4,4 +4,10 @@ node_modules/
 !.env.example
 .vercel/
 dist/
+__pycache__/
+*.pyc
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
 

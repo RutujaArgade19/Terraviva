@@ -16,7 +16,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' 'sha256-dCNOmK/nSY+12vHzasLXiswzlGT5UHA7jAGYkvmCuQs=' 'sha256-M8TQGBsWsbCfT405qTs3z5V1zfUebONCuxgE4XoNhus=' 'sha256-Bu/2c9nZypIYZD2kGKYbHOe+SC5jU1IYuMaL+zEPpyg='; style-src 'self' 'sha256-1b/1Rxrz1GJh27RP5WbEQV7ifBmLVqivLHMD7UU3n04='; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         }
       ]
     }

@@ -19,7 +19,21 @@ await invoke(depot,{action:'message',message:'SHARE COOP 7',id:'share'},h);await
 const projected=JSON.parse((await invoke(depot,{action:'read'},ph)).body);assert.equal(projected.records[0].volume,12);assert.equal(projected.state,undefined);
 assert.equal((await invoke(depot,{action:'consent',enabled:true},ph)).status,403);
 await invoke(depot,{action:'message',message:'REVOKE COOP',id:'revoke'},h);assert.equal((await invoke(depot,{action:'read'},ph)).status,403);
+const beforeImport=JSON.parse((await invoke(depot,{action:'read'},h)).body).state;
+const rows=[{id:'load-2026-1',farm:'farm-a',product:'barley',quantity:'1250',unit:'kg',field:'Peña',date:'2026-09-22'}];
+const imported=JSON.parse((await invoke(depot,{action:'import',rows,sourceName:'harvest.csv',commercial:true,grants:[{recipient:'attacker'}]},h)).body);
+assert.equal(imported.added,1);assert.equal(imported.state.records.length,2);assert.equal(imported.state.records[1].volume,1.25);
+assert.equal(imported.state.records[1].date,'2026-09-22');assert.equal(imported.state.records[1].source,'file import • harvest.csv');
+assert.equal(imported.state.records[1].importMeta.farm,'farm-a');assert.equal(imported.state.commercial,beforeImport.commercial);
+assert.deepEqual(imported.state.grants,beforeImport.grants);assert.deepEqual(imported.state.processed,beforeImport.processed);
+const repeated=JSON.parse((await invoke(depot,{action:'import',rows,sourceName:'harvest.csv'},h)).body);assert.equal(repeated.added,0);assert.equal(repeated.skipped,1);
+assert.equal((await invoke(depot,{action:'import',rows,sourceName:'harvest.csv'},ph)).status,403);
+const foreign=await invoke(depot,{action:'import',rows:[{...rows[0],farm:'other-farm'}],sourceName:'foreign.csv'},h);assert.equal(foreign.status,400);assert.ok(JSON.parse(foreign.body).issues.length);
+assert.equal((await invoke(depot,{action:'import',rows:[{...rows[0],quantity:'2500'}],sourceName:'harvest.csv'},h)).status,400);
+assert.equal((await invoke(depot,{action:'import',plan:{records:rows},sourceName:'forged.csv'},h)).status,400);
+const afterImport=JSON.parse((await invoke(depot,{action:'read'},h)).body).state;assert.equal(afterImport.records.length,2);
 assert.equal([...db.values()].some(x=>x.includes('North Field')),false);
 }finally{global.fetch=original;for(const k of names)if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k]}
 });
+
 
