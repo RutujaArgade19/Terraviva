@@ -1,13 +1,18 @@
 {
   "name": "terraviva",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "start": "node server.cjs",
+    "pretest": "npm run report",
     "test": "node --test test/*.cjs",
-    "build": "node scripts/build.cjs"
+    "build": "node scripts/build.cjs",
+    "report": "python3 scripts/prepare-reference.py && node scripts/build-report.cjs",
+    "prepare:data": "python3 scripts/prepare-reference.py",
+    "stage:data": "python3 scripts/stage-datasets.py"
   },
   "engines": {
     "node": ">=22"
   }
 }
+

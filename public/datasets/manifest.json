@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "status": "reference-ready",
+  "description": "The retrieved hackathon source collection is available through the reference explorer. Source records remain unassigned. The complete original release has not been inventoried.",
+  "datasets": [],
+  "reference": {
+    "sourceFiles": 28,
+    "rows": 1754685,
+    "catalog": "/reference/index.json"
+  }
+}

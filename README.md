@@ -1,54 +1,153 @@
 # Terraviva
-Farmer-controlled data depot with an SMS field interface, personal dashboard, scoped cooperative access and a commercial participation module.
+
+Farmer-controlled data depot with an SMS field interface, personal dashboard, device sensor collection, scoped cooperative access, dataset imports and a separate commercial participation choice. The [product brief](docs/product-brief.md) describes the farmer wallet and its wider roadmap.
+
+## Current data status
+
+The repository contains **28 verified source CSV files**, preserved in a lossless source bundle. The build restores their original bytes and generates every parsed row for a paginated reference-data browser. The retrieved collection has **1,754,685 source-table rows**, **804 field occurrences** and **566,600,488 original source bytes**. Row totals include overlapping source views; they are not counts of distinct farm events.
+
+These files were recovered individually from the supplied OneDrive collection. The original `all-datasets.zip` was not transferred, and its full inventory and checksum remain unknown. The report identifies 44 additional observed filenames whose contents were not retrieved. The source snapshot is complete for the 28 retrieved files, not certified complete for the publisher's release.
+
+The [data report](https://terraviva-ruddy.vercel.app/data-report.html) contains full-table descriptive analysis, source hashes and limitations. The [reference-data browser](https://terraviva-ruddy.vercel.app/reference-data.html) exposes all source columns and rows with full-source filtering. Both remain separate from the private farmer ledger and its permissions.
 
 ## Run
-Requires Node 22 or later. No runtime dependencies.
+
+Requires Node 22 or later and Python 3.11 or later. Reference preparation runs during the build using Python's standard library. The test command also prepares the source data and generates the report before tests run, so a fresh checkout has no dependency on previously generated files. No npm or pip packages are required.
+
 ```sh
+npm run prepare:data
 npm test
 npm run build
 npm start
 ```
-Open http://127.0.0.1:3000. Demo mode uses browser storage and sends no SMS. A first visit is pre-filled with clearly labeled illustrative farmer data so the dashboards are immediately presentable; clear the `terraviva-v2` browser storage key to return to an empty demo.
+
+Open http://127.0.0.1:3000. Depot demo mode uses browser storage and sends no SMS. The self-contained report is at `/data-report.html`; the complete source explorer is at `/reference-data.html`; the farmer sensor module is at `/sensors.html`.
+
+## Data architecture
+
+| Layer | Role | Write path |
+| --- | --- | --- |
+| `data/source-bundle/` | Committed original CSV bytes, full source profiles and report analysis in a checksummed tar+xz archive, split into 111 fragments of at most 500,000 bytes | Verified source snapshot |
+| `data/reference-base/sources/` | Generated per-source gzip fragments that restore exact CSV bytes | `npm run prepare:data` |
+| `data/reference-base/catalog.json` and `schemas/` | Source hashes, row counts, columns, storage manifests and SQL schemas | Generated from verified source files |
+| `public/reference/` | Checksummed, paginated JSON for all 28 source tables, plus complete profiles | Offline build; read-only in the browser |
+| SQLite reference snapshot | One portable queryable database with all original parsed source rows, metadata and operation-overlap views | Rebuilt locally after source preparation |
+| Farmer depot | Farmer-specific harvest declarations, sensor readings, grants and operational state | Confirmed SMS, validated file import or authenticated device ingestion |
+| `report/archive-analysis.json` | Measured findings and full profiles for the retrieved source collection | Explicit analysis of the verified data |
+
+**SQL is the base-data choice.** The source consists of tabular records with explicit holding, year, transaction, crop and operation keys. SQLite makes the snapshot portable and queryable, while original lexical values remain TEXT until a documented analytical cast is needed. Only the literal source token `\N` becomes SQL/JSON null; empty strings, zero, identifier formatting and decimal text remain intact. The existing encrypted Redis store remains the live farmer store. The app does not write to a SQLite file on Vercel.
+
+The browser validates both compressed and decoded page hashes and loads bounded pages. Filtering scans every page of the selected table, reports progress and can be cancelled. Visible rows are paginated; that display limit does not truncate the stored source. Source quantities are shown with their units, and synthetic/static status fields remain visible alongside relevant figures.
+
+### Rebuild or inspect the reference data
+
+See [data/README.md](data/README.md) for reconstruction commands, SQL examples, precision rules and source reconciliation. The downloadable SQLite package is delivered separately because it is larger than a sensible individual Git file. The committed source bundle is the reproducible base.
+
+The 55,462,120-byte bundle contains all 28 original CSV files and two metadata/analysis files. `npm run prepare:data` verifies every fragment, the joined archive and every original member before generating the catalog, schemas, source fragments and app pages. It refuses unexpected archive paths, links and edited generated output. Generated assets are excluded from Git; `npm run build` prepares them automatically and creates the complete self-contained report. Cached builds verify both the source fragments and every prepared output hash.
+
+The general-purpose `scripts/stage-datasets.py` remains available for a future original ZIP or a new local CSV/TSV/JSON collection. Its bounded `/datasets/` views support the explicit harvest-import workflow. The retrieved hackathon collection uses the separate complete `/reference/` pages so large, multi-farm tables keep their source meaning.
+
+## Import records in the app
+
+1. Open **Data import** and choose a UTF-8 CSV/JSON file or an available repository source.
+2. Select the table and map product, quantity, unit, field and date. Dates must be explicit, valid ISO calendar dates. Quantities need a supported, unambiguous mass unit.
+3. Review the destination farm, normalized rows, total mass and duplicate warnings.
+4. Confirm the batch. Browser-demo imports stay on the device. Connected imports go through authenticated server validation and encrypted storage.
+
+The app accepts at most 1 MiB per source and 1,000 rows per harvest batch. It rejects malformed CSV rows, invalid dates, ambiguous units, mismatched farm identities and conflicting reuse of source IDs. Larger archive tables can remain in the SQLite reference snapshot; the app does not silently take the first 1,000 rows. Reimporting the same source skips identical records. Renaming a source changes its identifier namespace, so duplicate measurements require review.
+
+Reference tables are not automatically assigned to a farmer. A weather series, a regional benchmark or a multi-farm export must retain its own meaning. Only compatible harvest rows belong in the harvest ledger, after a valid farm mapping and explicit confirmation.
+
+Importing preserves existing permission and commercial participation settings. Existing active cooperative grants cover the relevant fields of newly imported harvest records too. No new grant or commercial authorization is created by an import.
+
+## Gather each farmer's sensor data
+
+The sensor module accepts readings from enrolled devices or gateways through `POST /api/sensors`. Each ingest credential is bound on the server to one farm and one device; it can optionally be restricted to a named field. A device cannot choose another farm in its payload. Farmer viewing uses the existing farmer credential through `GET /api/sensors`. See [the sensor enrollment and API guide](docs/sensors.md) for the complete request contract and equipment setup requirements.
+
+Readings preserve a source ID, device, field, measurement, numeric source text, unit, observation time, server receipt time and sender-supplied quality status. Compatible units are validated; unlike measures are not pooled. Late and out-of-order readings are accepted with their original observation time. Identical retries are idempotent, while reusing an ID with different contents rejects the batch. Sensor writes preserve harvest records, grants and commercial participation settings.
+
+Open **Farm sensors** for a tab-local demonstration or connect with a farmer token to view the private depot. Device ingestion credentials belong on enrolled hardware or gateways. The connected main dashboard and data depot also show sensor counts, latest observations and source quality flags. **Refresh depot** fetches a fresh farmer-authenticated snapshot; **Export sensor history** retains source values and both timestamps. Local demo readings are explicitly labelled and are not uploaded.
+
+The pilot stores at most 10,000 readings per farm, subject to a whole-depot serialized size limit of 3 MiB. Batches are bounded to 500 readings and 256 KiB. Capacity errors return 507 without deleting old readings or partly accepting a batch. Production histories need a durable event store, pagination and an agreed retention policy. Sensor partner sharing is a future extension; the current sensor read endpoint requires the farmer role. No sensor data enters a commercial report automatically.
+
+Live collection needs the Redis/encryption settings below and `SENSOR_DEVICE_ACCESS_JSON`, an array of device credential hashes with fixed farm/device assignments. The implementation supplies the ingestion interface, farmer view and a [durable gateway sender](docs/sensor-gateway.md). The sender uses a local SQLite outbox to retain mapped observations through restarts and temporary network failures, then retries submissions without creating duplicate server readings. It runs on the gateway or another always-on machine, not inside a Vercel request. Hardware enrollment and provider-specific MQTT, LoRaWAN or vendor API bridges require the farmer's actual equipment and credentials. The reference snapshot contains no measured live sensor history to connect automatically.
+
+## HTML data report
+
+**Data report** opens the complete self-contained analysis of the 28 retrieved files, including:
+
+- A source inventory with file sizes, SHA-256 hashes, table shapes and retrieval status.
+- All 804 field occurrences with types, missingness, distinct values and source context.
+- Numeric summaries, histograms, quartiles, IQR review candidates and date coverage.
+- Key uniqueness, measured relationships, join coverage and repeated source projections.
+- Twenty-four evidence-based findings and nineteen measured relationships, with synthetic, static and regional limitations stated where they matter.
+- A permanent source report plus an optional local exploratory profiler.
+
+The analysis uses every row of the retrieved files. It does not infer population coverage, real-world farm performance or consent from synthetic source values. In particular, it identifies the repeated 2021 operation projection, the farm/subsidy projection, mixed animal-product units, static herd denominators and certificate joins that would multiply sales totals if flattened carelessly.
+
+The optional interactive profiler accepts files within explicit limits: 20 MiB, 100,000 rows, 250 columns, 2 million cells and 32 tables. Larger inputs are refused rather than silently sampled. The complete source explorer has a separate paginated path for the full reference tables. Built-in profiler examples are labelled synthetic.
+
+Choose a small local file, paste text or use **Analyse my records** from the depot. A selected file is processed in browser memory. The depot-to-report handoff sends only the current farm and its record export to the report window on the same origin; it does not send access tokens or permission state. Profile JSON can contain source category values.
+
+The measured collection is stored in `report/archive-analysis.json`, following [the analysis contract](report/archive-contract.md). Its findings remain visible when a visitor loads another file or clears the interactive analyser. The fixed architecture audit is explicitly pinned to original commit `e0013fbfb8c9de2d5a7b850216270e6836857073`; it is historical context, not a claim that this revision has only the original SMS schema.
+
+Edit `report/template.html`, `report/style.css` and `report/ui.js`, then run `npm run report` or `npm run build`. The build validates the analysis contract, embeds all report assets and recomputes exact script/style Content Security Policy hashes. It does not enable `unsafe-inline`.
 
 ## Demo journey
-1. Open **Text from the field** and send: Harvested 12 tonnes of wheat from North Field
-2. Send YES. The record appears in My data depot and My dashboard.
-3. Send SHARE COOP 7, then CONFIRM. Permissions shows the cooperative view.
-4. Send REVOKE COOP. Future partner access is denied.
+
+1. Open **Text from the field** and send: `Harvested 12 tonnes of wheat from North Field`.
+2. Send `YES`. The record appears in **My data depot** and **My dashboard**.
+3. Send `SHARE COOP 7`, then `CONFIRM`. **Permissions** shows the cooperative view.
+4. Send `REVOKE COOP`. Future partner access is denied.
 5. Commercial participation is a separate dashboard choice, off by default.
-6. Industry insights withholds results: this workspace has one farm, below the five-farm demonstration threshold.
+6. **Industry insights** withholds results: this workspace has one farm, below the five-farm demonstration threshold.
+7. Export the records or open **Analyse my records** to profile the actual local declarations.
 
 ## Connect the central pilot
-Configure server-only Vercel variables listed in .env.example:
-- UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN: your durable Redis REST service.
-- DEPOT_ENCRYPTION_KEY: 32 cryptographically random bytes encoded in hex. Back up securely; losing it loses data access.
-- DEPOT_ACCESS_JSON: array of {tokenHash, farm, role}, where tokenHash is SHA256 of a random token of at least 32 characters. role is farmer or partner. A partner entry also needs recipient: COOP.
-- SMS_FARM_MAP_JSON: map verified E.164 numbers to the same farm identifiers. Enrol numbers out of band; verify ownership and the cooperative relationship before enabling.
-- TWILIO_AUTH_TOKEN and TWILIO_WEBHOOK_URL: exact HTTPS POST webhook URL, e.g. https://your-domain/api/sms. Configure the Twilio number's incoming messaging webhook as form-encoded POST to that URL.
 
-Use Connect private depot and your farmer token. Tokens are held in browser memory, not localStorage. The API derives the farm from credentials, never from a client-supplied farm ID. Partner reads use the same endpoint with the partner token and action read; no active grant returns 403.
+Configure server-only Vercel variables listed in `.env.example`:
 
-Stored farm state uses AES-256-GCM with farm-bound additional authenticated data. Redis compare-and-swap updates avoid lost concurrent writes. Message IDs deduplicate retries. Twilio form signatures are checked before processing. Duplicate webhook deliveries return empty TwiML to avoid duplicate replies. Confirmation expires in ten minutes. Rate limiting is per enrolled farm (60 requests/minute). Missing service configuration fails closed.
+- `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`: your durable Redis REST service.
+- `DEPOT_ENCRYPTION_KEY`: 32 cryptographically random bytes encoded in hex. Back up securely; losing it loses data access.
+- `DEPOT_ACCESS_JSON`: array of `{tokenHash, farm, role}`, where `tokenHash` is SHA-256 of a random token of at least 32 characters. `role` is `farmer` or `partner`. A partner entry also needs `recipient: "COOP"`.
+- `SENSOR_DEVICE_ACCESS_JSON`: ingest-only device entries `{tokenHash, farm, deviceId, field?, label?, enabled?}`. Use distinct random device credentials and server-side SHA-256 hashes. Disabling an entry or removing it revokes future ingestion.
+- `SMS_FARM_MAP_JSON`: map verified E.164 numbers to the same farm identifiers. Enrol numbers out of band; verify ownership and the cooperative relationship before enabling.
+- `TWILIO_AUTH_TOKEN` and `TWILIO_WEBHOOK_URL`: exact HTTPS POST webhook URL, e.g. `https://your-domain/api/sms`. Configure the Twilio number's incoming messaging webhook as form-encoded POST to that URL.
 
-The SMS endpoint returns TwiML for the provider to reply; no unsolicited outbound SMS API is used. SMS commands cannot enable commercial use or add recipients. Use REVOKE COOP, not the carrier-reserved STOP keyword.
+Use **Connect private depot** and your farmer token. Tokens are held in browser memory, not localStorage. The API derives the farm from credentials. Partner reads use the same endpoint with the partner token and `action: "read"`; no active grant returns 403. Partners cannot import records.
 
-### Outbound SMS (disabled by default)
-`SMS_MODE=demo` is the safe default. Authenticated farmer clients may call `POST /api/sms-send` with `{ "action":"consent", "enabled":true }`, then `{ "action":"send", "message":"..." }`; demo responses explicitly report that no message was sent. Consent is stored per farm, can be revoked, and sends are restricted to the verified enrolled farmer E.164 number in `SMS_FARM_MAP_JSON`. The existing per-farm rate limit applies to consent and sends.
+Stored farm state uses AES-256-GCM with farm-bound additional authenticated data. Redis compare-and-swap updates avoid lost concurrent writes. Message IDs deduplicate delivery retries. Twilio form signatures are checked before processing. Duplicate webhook deliveries return empty TwiML to avoid duplicate replies. Confirmation expires in ten minutes. Rate limiting is per enrolled farm: 60 requests/minute. Missing service configuration fails closed.
 
-For real Twilio delivery, obtain a Twilio Account SID, Auth Token, and an SMS-capable E.164 Twilio number, configure them as server-only variables, set `SMS_MODE=live`, and obtain explicit approval before enabling it. The route reports provider rejection without exposing provider credentials. Do not run live-provider tests against a paid account; use the demo mode and mocked `fetch` tests.
+The SMS endpoint returns TwiML for the provider to reply; no unsolicited outbound SMS API is used. SMS commands cannot enable commercial use or add recipients. Use `REVOKE COOP`, not the carrier-reserved `STOP` keyword.
 
 ## Deployment
-Import jesusvilela/Terraviva in Vercel. Framework: Other. Build: npm run build. Output: dist. API routes in api/ are serverless functions. Browser demo works without secrets; central pilot and live SMS need the variables above. A Twilio webhook must be reachable by Twilio; use an appropriate configured domain without Vercel login interception. Do not expose secrets to the browser or commit .env.
+
+Existing repository: `jesusvilela/Terraviva`. Vercel configuration: framework **Other**, build `npm run build`, output `dist`. Use a build image with Node 22 and Python 3.11+; Vercel's Amazon Linux 2023 build image supplies Python 3.12. API routes in `api/` are serverless functions. The build prepares the reference data, generates the report and recursively copies only `public/`, including all paginated reference views. The SQLite database and compressed source bundle are not app static routes. Files committed to the public GitHub repository remain public there.
+
+Browser demo, local imports and report work without secrets. The central pilot and live SMS need the variables above. A Twilio webhook must be reachable by Twilio; use an appropriate configured domain without Vercel login interception. Do not expose secrets to the browser or commit `.env`.
 
 ## Scope and limitations
-This is an engineering pilot, not a production security certification. It has administrator-issued bearer tokens, not self-service identity, MFA, account recovery or a consent-contract system. SMS phone ownership alone is weak assurance; allow only low-risk pilot records and pre-approved relationships. SMS is not end-to-end encrypted. Supported grammar is English examples, not unrestricted AI language understanding. Dates use UTC. Historical/date-qualified harvest messages are rejected unless they match the documented grammar.
 
-No dataset archive is published. Farmer-entered records are declarations; do not infer verified crop/batch certificates. No file upload, integration connector, payments, live commercial report, arbitrary cohort queries or revenue-share accounting is implemented. Minimum group size is a demonstration safeguard, not proof of anonymisation. A production report needs disclosure analysis and repeated-query protection.
+This is an engineering pilot. It has administrator-issued bearer tokens, not self-service identity, MFA, account recovery or a consent-contract system. SMS phone ownership alone is weak assurance; use pre-approved pilot relationships. SMS is not end-to-end encrypted. Supported SMS grammar consists of English command patterns. Dates in original SMS records use UTC intake time; date-qualified text can be absorbed into free-text field labels and must not be interpreted as a parsed historical event date. File import requires an explicit source date.
+
+Farmer-entered records are declarations, not independently verified crop/batch certificates. The original parser uses ASCII crop/field patterns; file imports preserve validated Unicode labels. It can misread a thousands comma as a decimal comma. No measured farm area, sales prices or population coverage is stored, so these records alone cannot establish yield, revenue or market share.
+
+Provider-specific sensor bridges, payment systems, live commercial reports, arbitrary cohort query services and revenue-share accounting are roadmap work. Minimum group size is a demonstration safeguard, not proof of anonymisation. Commercial permission remains a current boolean rather than a versioned consent contract. A production analytics product needs a more complete disclosure and consent model.
 
 The per-farm encrypted document and deduplication history grow with use: suitable for a bounded pilot, requiring event-table storage and retention policy for scale. Event history is not tamper-proof. Key rotation, backups/restore, recipient onboarding, telecom configuration and real-provider end-to-end tests remain operational work.
 
 ## Verification
-Tests cover confirmation/cancellation/expiry, duplicate messages, quantity validation, scoped projection/revocation, distinct-farm aggregate suppression, encryption/tampering, identity selection, a published Twilio signature vector, and mocked central-storage API/SMS flows. External Redis and Twilio integrations need live credentialed verification.
 
-References: https://www.twilio.com/docs/usage/security and https://upstash.com/docs/redis/features/restapi.
+```sh
+npm run prepare:data
+npm test
+python3 test/stage-datasets.py
+python3 test/reference-base.py
+python3 test/reference-sqlite.py
+python3 test/prepare-reference.py
+npm run build
+```
 
+Tests exercise core confirmation and permissions, encryption and signatures, mocked authenticated API/SMS flows, full-row EDA edge cases, strict harvest normalization, cross-farm rejection, repeat imports, provenance and archive staging. Synthetic test fixtures are kept separate from the app's real-data catalog. External Redis and Twilio integrations need live credentialed verification.
+
+References: [Twilio request security](https://www.twilio.com/docs/usage/security), [Upstash Redis REST API](https://upstash.com/docs/redis/features/restapi), [Vercel build image](https://vercel.com/docs/builds/build-image), [Vercel function limits](https://vercel.com/docs/functions/limitations).
