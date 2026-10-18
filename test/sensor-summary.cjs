@@ -38,6 +38,7 @@ function dashboard({localState,fetch:handleFetch=async()=>{throw Error('Unexpect
       }
     }
     get innerHTML(){return this._html;}
+    insertAdjacentHTML(position,html){assert.equal(position,'afterbegin');this._html=html+this._html;}
     hasAttribute(name){return this.attributes.has(name);}
     closest(selector){return selector==='button'?this:null;}
     showModal(){this.open=true;}
@@ -70,10 +71,38 @@ function dashboard({localState,fetch:handleFetch=async()=>{throw Error('Unexpect
     navigate(view){const button=nav.find(item=>item.dataset.view===view);assert.ok(button,'Missing view '+view);button.click();},
     connect(candidate=TOKEN){element('connect').click();element('token').value=candidate;return element('login-form').onsubmit({preventDefault(){}});},
     refresh:()=>vm.runInContext('refreshDepot()',context),
+    submit:text=>vm.runInContext('submit('+JSON.stringify(text)+')',context),
     disconnect(){element('connect').click();},
     async exportSensors(){element('export-sensors').click();assert.ok(downloads.length,'No export was created');return JSON.parse(await downloads.at(-1).text());}
   };
 }
+
+test('returning empty demo loads a coherent sample across views and SMS updates the same wallet',async()=>{
+  const h=dashboard({localState:Core.initial()});
+  assert.match(h.content(),/24\.30/);assert.match(h.content(),/Ana García/);assert.match(h.content(),/ILLUSTRATIVE SENSOR SNAPSHOT/);
+  h.navigate('depot');assert.match(h.content(),/Hillside Grove/);assert.match(h.content(),/12\.4 t/);
+  h.navigate('permissions');assert.match(h.content(),/Access is active/);
+  h.navigate('activity');assert.match(h.content(),/Harvest confirmed/);
+  h.navigate('industry');assert.match(h.content(),/122 t/);assert.match(h.content(),/SEPARATE SYNTHETIC COHORT/);
+  h.navigate('sms');assert.match(h.content(),/3 harvest records \(24\.30 tonnes\)/);
+  await h.submit('Harvested 2 tonnes of wheat from North Field');await h.submit('YES');
+  h.navigate('overview');assert.match(h.content(),/26\.30/);
+  assert.equal(h.requests.length,0);assert.equal(JSON.parse(h.storage.get('terraviva-v2')).records.length,4);
+});
+
+test('sample never populates a connected private depot and disconnect restores the browser example',async()=>{
+  const h=dashboard({localState:Core.initial(),fetch:async()=>response({farm:'empty-private',state:Core.initial()})});
+  await h.connect();assert.doesNotMatch(h.content(),/Ana García|ILLUSTRATIVE SENSOR SNAPSHOT/);
+  h.navigate('depot');assert.match(h.content(),/No harvests yet/);
+  h.navigate('industry');assert.doesNotMatch(h.content(),/SEPARATE SYNTHETIC COHORT/);
+  h.disconnect();h.navigate('overview');assert.match(h.content(),/24\.30/);
+  assert.equal(h.storageWrites.length,0);
+});
+
+test('browser migration preserves meaningful or unknown saved state',()=>{
+  for(const saved of [{...Core.initial(),events:[{text:'Deleted my records'}]}, {...Core.initial(),commercial:true}, {...Core.initial(),sensors:{version:1,readings:[]}}, {...Core.initial(),pending:{kind:'harvest'}}, {...Core.initial(),processed:{id:'reply'}}, {...Core.initial(),futureField:true}])assert.equal(Core.browserDemo(saved),saved);
+  assert.equal(Core.initial().records.length,0);assert.equal(Core.browserDemo(null).records.length,3);
+});
 
 test('disconnected dashboard never reads or presents sensor values from local demo state',()=>{
   const poisoned={get version(){throw Error('Disconnected sensor data must not be inspected');}};

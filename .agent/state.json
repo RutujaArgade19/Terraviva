@@ -1,6 +1,6 @@
 {
-  "task": "Refactor Terraviva SMS integration and add coherent five-minute hackathon pitch",
-  "status": "implemented; live-provider activation intentionally disabled",
-  "verification": ["138 automated tests pass", "npm run build passes", "git diff --check passes", "pitch.html is static and presentation-only", "SMS inbound and authenticated outbound routes are deployed in the merged branch"],
-  "limitations": ["Vercel deployment completion was not independently observed", "live SMS delivery was not sent", "commercial reports and sales disabled"]
+  "task": "Populate the main farmer demo and repair legacy empty-wallet loading",
+  "status": "implemented and tested; deployment verification pending",
+  "verification": ["npm test: 141 pass", "node --test test/sensor-summary.cjs: 16 pass", "npm run build passes", "git diff --check passes"],
+  "limitations": ["No SMS sent", "Sensor snapshot and industry cohort are explicitly synthetic", "Private depots are never seeded", "Main SMS screen remains a simulator or authenticated text console, not an outbound sender"]
 }

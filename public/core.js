@@ -2,6 +2,15 @@
 'use strict';
 const allowed=['product','volume','date','field'];
 function initial(){return {records:[],grants:[],commercial:false,pending:null,processed:{},events:[]}}
+// Only migrate a pristine legacy browser wallet. Never replace meaningful saved work.
+function browserDemo(saved,now=Date.now()){
+ const valid=saved&&['records','grants','events'].every(k=>Array.isArray(saved[k]));
+ if(!valid)return demo(now);
+ const pristine=Object.keys(saved).every(k=>Object.hasOwn(initial(),k))&&
+  !saved.records.length&&!saved.grants.length&&!saved.events.length&&!saved.commercial&&!saved.pending&&
+  !Object.keys(saved.processed||{}).length;
+ return pristine?demo(now):saved;
+}
 function demo(now=Date.now()){const day=86400000;return {records:[
  {id:'demo-record-1',product:'wheat',volume:12.4,date:'2026-10-12',field:'North Field',source:'illustrative farmer entry'},
  {id:'demo-record-2',product:'olives',volume:3.8,date:'2026-10-09',field:'Hillside Grove',source:'illustrative farmer entry'},
@@ -48,5 +57,5 @@ const eligible=farms.filter(f=>f.commercial&&f.records.length);
 const unique=new Map(eligible.map(f=>[f.id,f]));if(unique.size<min)return {suppressed:true,minimum:min};
 return {suppressed:false,farms:unique.size,volumeTonnes:[...unique.values()].reduce((n,f)=>n+f.records.reduce((a,r)=>a+r.volume,0),0)}
 }
-return {initial,demo,apply,active,project,aggregate};
+return {initial,demo,browserDemo,apply,active,project,aggregate};
 });
