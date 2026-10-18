@@ -1,7 +1,8 @@
 'use strict';
 const $=s=>document.querySelector(s),esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let state=Terra.initial(),view='overview',token='',farm='Demo farm',busy=false;
-try{const x=JSON.parse(localStorage.getItem('terraviva-v2'));if(x&&Array.isArray(x.records)&&Array.isArray(x.grants)&&Array.isArray(x.events))state=x}catch{}
+let state=Terra.initial(),view='overview',token='',farm='Illustrative farmer · Ana García',busy=false;
+let stored=false;try{const x=JSON.parse(localStorage.getItem('terraviva-v2'));if(x&&Array.isArray(x.records)&&Array.isArray(x.grants)&&Array.isArray(x.events)){state=x;stored=true}}catch{}
+if(!stored){state=Terra.demo();persist()}
 let chat=[{who:'bot',text:'Welcome to Terraviva. Try: Harvested 12 tonnes of wheat from North Field.'}];
 function persist(){if(!token)try{localStorage.setItem('terraviva-v2',JSON.stringify(state))}catch{$('#status').textContent='Browser storage unavailable. Keep this tab open.'}}
 async function api(action,extra={}){const r=await fetch('/api/depot',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');return data}
@@ -10,7 +11,7 @@ function records(rows){return rows.length?'<div class="table-wrap"><table><thead
 function render(){
 document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
 $('#identity').textContent=farm;
-$('#mode').textContent=token?'Connected pilot depot · Stored centrally. This text panel sends authenticated requests; live SMS requires provider setup.':'Browser demo · Your changes stay on this device. SMS is simulated; no messages are sent.';
+$('#mode').textContent=token?'Connected pilot depot · Stored centrally. This text panel sends authenticated requests; live SMS requires provider setup.':'Illustrative farmer demo · Sample data only. SMS is simulated; no messages are sent.';
 const c=$('#content');
 if(view==='overview'){const grouped={};for(const r of state.records)grouped[r.product]=(grouped[r.product]||0)+r.volume;
 c.innerHTML=stats()+'<div class="two-col"><article class="card"><p class="eyebrow">YOUR HARVEST AT A GLANCE</p><h2>What you have recorded</h2>'+Object.entries(grouped).map(([p,n])=>'<div class="crop"><span>'+esc(p)+'</span><strong>'+n.toFixed(2)+' t</strong></div>').join('')+(!state.records.length?'<p class="muted">Your dashboard fills automatically when you confirm a harvest.</p>':'')+'</article><article class="card green"><p class="eyebrow">VALUE COMES BACK TO YOU</p><h2>One message.<br>Less paperwork.</h2><p>Every confirmed field record becomes part of your depot and dashboard.</p><button class="link" data-view="sms">Record a harvest →</button></article></div><article class="card space"><h3>Commercial participation is '+(state.commercial?'on':'off')+'</h3><p>Your own dashboard works either way. Industry analytics require a separate choice and a sufficiently large participating group.</p><button class="link" data-view="permissions">Manage my choices</button></article>'}

@@ -2,6 +2,16 @@
 'use strict';
 const allowed=['product','volume','date','field'];
 function initial(){return {records:[],grants:[],commercial:false,pending:null,processed:{},events:[]}}
+function demo(now=Date.now()){const day=86400000;return {records:[
+ {id:'demo-record-1',product:'wheat',volume:12.4,date:'2026-10-12',field:'North Field',source:'illustrative farmer entry'},
+ {id:'demo-record-2',product:'olives',volume:3.8,date:'2026-10-09',field:'Hillside Grove',source:'illustrative farmer entry'},
+ {id:'demo-record-3',product:'wheat',volume:8.1,date:'2026-10-03',field:'River Flat',source:'illustrative farmer entry'}
+ ],grants:[{id:'demo-grant-1',recipient:'COOP',fields:[...allowed],purpose:'Harvest coordination',expires:new Date(now+7*day).toISOString(),revoked:false}],commercial:false,pending:null,processed:{},events:[
+ {time:new Date(now-1*day).toISOString(),text:'Granted COOP harvest access for 7 days'},
+ {time:new Date(now-2*day).toISOString(),text:'Harvest confirmed: 8.1 t wheat'},
+ {time:new Date(now-6*day).toISOString(),text:'Harvest confirmed: 3.8 t olives'},
+ {time:new Date(now-10*day).toISOString(),text:'Harvest confirmed: 12.4 t wheat'}
+ ]}}
 function active(g,now){return !g.revoked&&Date.parse(g.expires)>now}
 function event(s,text,now){s.events.unshift({text,time:new Date(now).toISOString()})}
 function apply(state,message,id,now=Date.now()){
@@ -38,5 +48,5 @@ const eligible=farms.filter(f=>f.commercial&&f.records.length);
 const unique=new Map(eligible.map(f=>[f.id,f]));if(unique.size<min)return {suppressed:true,minimum:min};
 return {suppressed:false,farms:unique.size,volumeTonnes:[...unique.values()].reduce((n,f)=>n+f.records.reduce((a,r)=>a+r.volume,0),0)}
 }
-return {initial,apply,active,project,aggregate};
+return {initial,demo,apply,active,project,aggregate};
 });

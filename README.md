@@ -8,7 +8,7 @@ npm test
 npm run build
 npm start
 ```
-Open http://127.0.0.1:3000. Demo mode uses browser storage and sends no SMS.
+Open http://127.0.0.1:3000. Demo mode uses browser storage and sends no SMS. A first visit is pre-filled with clearly labeled illustrative farmer data so the dashboards are immediately presentable; clear the `terraviva-v2` browser storage key to return to an empty demo.
 
 ## Demo journey
 1. Open **Text from the field** and send: Harvested 12 tonnes of wheat from North Field
