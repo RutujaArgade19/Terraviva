@@ -12,7 +12,7 @@ Farmers grow food. Sharing the records behind it should not become a second job�
 
 Ana García is our **fictional demonstration farmer** in Valencia. Her starting wallet contains three wheat and olive harvests, **24.30 tonnes** in total, a cooperative permission and an activity history. Illustrative sensor cards give the dashboard context; they are not connected devices or measured farm evidence.
 
-In **Text from the field**, try:
+On the home screen, tap **Add my data → Send a text** and try:
 
 ```text
 Harvested 2 tonnes of wheat from North Field
@@ -32,11 +32,11 @@ The browser conversation is a simulator: no SMS is sent and no provider charges 
 | --- | --- | --- |
 | 0:00–1:00 | Ana’s dashboard | A farmer starts with useful records, not an empty form. |
 | 1:00–2:00 | Record a harvest in the text simulator; reply `YES` | Confirmation turns a short message into a structured record. |
-| 2:00–3:00 | Open **My data depot** and export records | The message and the wallet tell the same story. |
-| 3:00–4:00 | Inspect **Permissions**, then `REVOKE COOP` | Access is a choice the farmer can change. Previously exported copies cannot be recalled. |
-| 4:00–5:00 | Open **Industry insights** | A separately labelled five-farm synthetic cohort illustrates shared value. Ana’s one-farm report stays withheld. |
+| 2:00–3:00 | Open **My farm insights → All my records** and download them | The message and the wallet tell the same story. |
+| 3:00–4:00 | Open **Who sees my data**, then tap **Stop sharing** | Access is a choice the farmer can change. Previously exported copies cannot be recalled. |
+| 4:00–5:00 | Open **My farm insights → Compare with other farms** | A separately labelled five-farm synthetic cohort illustrates shared value. Ana’s one-farm report stays withheld. |
 
-For an optional real-phone moment, open **Text from the field → Open guarded live SMS**. Rehearse and configure it before the pitch; the browser simulator remains the no-charge fallback. The older `/pitch.html` is a separate presentation mockup, not the interactive wallet used above.
+For an optional real-phone moment, open **Add my data → Send a text → Open guarded live SMS**. Rehearse and configure it before the pitch; the browser simulator remains the no-charge fallback. The older `/pitch.html` is a separate presentation mockup, not the interactive wallet used above.
 
 ## What works—and what it depends on
 
@@ -105,7 +105,7 @@ The general-purpose `scripts/stage-datasets.py` remains available for a future o
 
 ## Import records in the app
 
-1. Open **Data import** and choose a UTF-8 CSV/JSON file or an available repository source.
+1. Open **Add my data → Upload a file** and choose a UTF-8 CSV/JSON file or an available repository source.
 2. Select the table and map product, quantity, unit, field and date. Dates must be explicit, valid ISO calendar dates. Quantities need a supported, unambiguous mass unit.
 3. Review the destination farm, normalized rows, total mass and duplicate warnings.
 4. Confirm the batch. Browser-demo imports stay on the device. Connected imports go through authenticated server validation and encrypted storage.
@@ -151,9 +151,9 @@ Edit `report/template.html`, `report/style.css` and `report/ui.js`, then run `np
 
 ## Try the permission boundary
 
-Send `SHARE COOP 7`, then `CONFIRM`, to grant seven-day access. Open **Permissions** to inspect the cooperative preview. Send `REVOKE COOP` to deny future access. Commercial contribution stays a separate choice, off by default.
+Send `SHARE COOP 7`, then `CONFIRM`, to grant seven-day access. Open **Who sees my data** to inspect the cooperative preview, or use its one-tap **Share for 7 days** and **Stop sharing** buttons. Send `REVOKE COOP` to deny future access. Commercial contribution stays a separate choice, off by default.
 
-**Industry insights** keeps the actual one-farm workspace report withheld. Its separate synthetic example uses five invented opt-in farms; it neither includes Ana’s wallet nor changes anyone’s consent. Export the wallet or choose **Analyse my records** to examine the records actually present in your session.
+**Compare with other farms** keeps the actual one-farm workspace report withheld. Its separate synthetic example uses five invented opt-in farms; it neither includes Ana’s wallet nor changes anyone’s consent. Export the wallet or choose **Analyse my records** to examine the records actually present in your session.
 
 ## Connect the central pilot
 

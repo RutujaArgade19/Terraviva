@@ -1,6 +1,6 @@
 # Live jury SMS
 
-From **Text from the field**, open **Open guarded live SMS**. This is separate from the free simulator.
+From **Add my data → Send a text**, open **Open guarded live SMS**. This is separate from the free simulator.
 
 ## Vercel production configuration
 

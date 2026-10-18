@@ -3,10 +3,10 @@
 Open `https://terraviva-ruddy.vercel.app/?demo=ana`, not the separate pitch page. This explicitly selects a separately stored sample wallet, even when another browser wallet exists. Empty-but-edited legacy wallets also open the isolated sample automatically, without overwriting the original browser storage. Fresh visitors and untouched legacy empty wallets load fictional Ana Garcia's three harvests (24.30 t), a seven-day COOP grant and activity. Private depots always use their own data, even when empty.
 
 1. **0:00–1:00 — Dashboard:** meet Ana, a fictional wheat and olive farmer in Valencia. Show recorded harvest totals and the explicitly illustrative sensor snapshot.
-2. **1:00–2:00 — Text from the field:** send `Harvested 2 tonnes of wheat from North Field`, then `YES`. This simulator uses the same command engine as the inbound SMS service but sends no SMS.
-3. **2:00–3:00 — My data depot:** show the new record and export the wallet. Total is now 26.30 t. Imported and declared harvests are not independently certified.
-4. **3:00–4:00 — Permissions:** inspect the cooperative's scoped preview, revoke access, then use `SHARE COOP 7` and `CONFIRM` to restore it. Commercial consent is separate and starts off.
-5. **4:00–5:00 — Industry insights:** show the separate five-farm synthetic example: 122 t pooled, 24.4 t mean. Ana is not included. Her real workspace report remains withheld; the demo does not bypass the minimum-group rule.
+2. **1:00–2:00 — Add my data → Send a text:** send `Harvested 2 tonnes of wheat from North Field`, then `YES`. This simulator uses the same command engine as the inbound SMS service but sends no SMS.
+3. **2:00–3:00 — My farm insights → All my records:** show the new record and export the wallet. Total is now 26.30 t. Imported and declared harvests are not independently certified.
+4. **3:00–4:00 — Who sees my data:** inspect the cooperative's scoped preview, tap **Stop sharing**, then **Share for 7 days** to restore it (the same `REVOKE COOP` / `SHARE COOP 7` + `CONFIRM` flow as the text commands). Show **My certificates** as the farmer's self-declared list. Commercial consent is separate and starts off.
+5. **4:00–5:00 — My farm insights → Compare with other farms:** show the separate five-farm synthetic example: 122 t pooled, 24.4 t mean. Ana is not included. Her real workspace report remains withheld; the demo does not bypass the minimum-group rule.
 
 The sensor simulator and reference-data explorer remain separate tools, not claimed integrations with Ana's wallet. A private connection hides the showcase entirely. The main text console is not an outbound SMS sender; live delivery and Vercel provider configuration require separate verification. No live SMS is needed for this pitch.
 

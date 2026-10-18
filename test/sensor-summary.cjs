@@ -68,10 +68,16 @@ function dashboard({localState,search='',fetch:handleFetch=async()=>{throw Error
   const element=id=>document.querySelector('#'+id);
   return{element,downloads,requests,storage,storageWrites,
     content:()=>element('content').innerHTML,
-    navigate(view){const button=nav.find(item=>item.dataset.view===view);assert.ok(button,'Missing view '+view);button.click();},
+    // Top-level tabs are clicked directly. Sub-screens must be reachable from their parent tab's
+    // content (a data-view button there) before the harness opens them like the click handler does.
+    navigate(view){const button=nav.find(item=>item.dataset.view===view);if(button){button.click();return;}
+      const parent={sms:'add',import:'add',depot:'insights',industry:'insights',activity:'permissions'}[view];assert.ok(parent,'Missing view '+view);
+      nav.find(item=>item.dataset.view===parent).click();assert.match(element('content').innerHTML,new RegExp('data-view="'+view+'"'),'View '+view+' is not reachable from '+parent);
+      vm.runInContext('view='+JSON.stringify(view)+';render()',context);},
     connect(candidate=TOKEN){element('connect').click();element('token').value=candidate;return element('login-form').onsubmit({preventDefault(){}});},
     refresh:()=>vm.runInContext('refreshDepot()',context),
     submit:text=>vm.runInContext('submit('+JSON.stringify(text)+')',context),
+    run:code=>vm.runInContext(code,context),
     disconnect(){element('connect').click();},
     async exportSensors(){element('export-sensors').click();assert.ok(downloads.length,'No export was created');return JSON.parse(await downloads.at(-1).text());}
   };
@@ -79,7 +85,8 @@ function dashboard({localState,search='',fetch:handleFetch=async()=>{throw Error
 
 test('returning empty demo loads a coherent sample across views and SMS updates the same wallet',async()=>{
   const h=dashboard({localState:Core.initial()});
-  assert.match(h.content(),/24\.30/);assert.match(h.content(),/Ana García/);assert.match(h.content(),/ILLUSTRATIVE SENSOR SNAPSHOT/);
+  assert.match(h.content(),/24\.30/);assert.match(h.content(),/Ana García/);
+  h.navigate('insights');assert.match(h.content(),/ILLUSTRATIVE SENSOR SNAPSHOT/);
   h.navigate('depot');assert.match(h.content(),/Hillside Grove/);assert.match(h.content(),/12\.4 t/);
   h.navigate('permissions');assert.match(h.content(),/Access is active/);
   h.navigate('activity');assert.match(h.content(),/Harvest confirmed/);
@@ -88,6 +95,32 @@ test('returning empty demo loads a coherent sample across views and SMS updates 
   await h.submit('Harvested 2 tonnes of wheat from North Field');await h.submit('YES');
   h.navigate('overview');assert.match(h.content(),/26\.30/);
   assert.equal(h.requests.length,0);assert.equal(JSON.parse(h.storage.get('terraviva-v2')).records.length,4);
+});
+
+test('home offers exactly three large farmer choices and the tab bar stays at four buttons',()=>{
+  const h=dashboard({localState:Core.initial()});
+  const tiles=[...h.content().matchAll(/<button class="tile[^"]*" data-view="([^"]+)"/g)].map(m=>m[1]);
+  assert.deepEqual(tiles,['add','insights','permissions']);
+  assert.match(h.content(),/Add my data/);assert.match(h.content(),/My farm insights/);assert.match(h.content(),/Who sees my data/);
+  h.navigate('add');assert.match(h.content(),/data-view="sms"/);assert.match(h.content(),/data-view="import"/);
+});
+
+test('one tap stops and restarts cooperative sharing without leaving the permissions screen',async()=>{
+  const h=dashboard({localState:Core.initial()});
+  h.navigate('permissions');assert.match(h.content(),/Access is active/);assert.match(h.content(),/id="stop-coop"/);
+  await h.submit('REVOKE COOP');h.navigate('permissions');assert.match(h.content(),/No access/);assert.match(h.content(),/id="share-coop"/);
+  await h.run('shareCoop()');assert.match(h.content(),/Access is active/);assert.match(h.element('status').textContent,/COOP can access harvest records for 7 days/);
+  assert.equal(h.requests.length,0);
+});
+
+test('farmer certificates are added, escaped, marked by validity and removed in the browser wallet',async()=>{
+  const h=dashboard({localState:Core.initial()});
+  h.navigate('permissions');assert.match(h.content(),/No certificates yet/);
+  h.element('cert-name').value='<b>Organic</b>';h.element('cert-issuer').value='Local body';h.element('cert-until').value='2099-01-31';
+  h.element('cert-form').onsubmit({preventDefault(){}});
+  assert.match(h.content(),/&lt;b&gt;Organic&lt;\/b&gt;/);assert.doesNotMatch(h.content(),/<b>Organic/);assert.match(h.content(),/Valid/);
+  const saved=JSON.parse(h.storage.get('terraviva-v2'));assert.equal(saved.certificates.length,1);
+  await h.run('removeCertificate('+JSON.stringify(saved.certificates[0].id)+')');assert.match(h.content(),/No certificates yet/);
 });
 
 test('sample never populates a connected private depot and disconnect restores the browser example',async()=>{
@@ -127,7 +160,7 @@ test('disconnected dashboard never reads or presents sensor values from local de
   assert.doesNotThrow(()=>Summary.render(poisoned));
   const localState={...Core.initial(),records:[record('local-barley')],sensors:sensors([row({field:'hidden-demo-field',value:'99999.87654'})])};
   const h=dashboard({localState});
-  for(const view of ['overview','depot']){
+  for(const view of ['insights','depot']){
     h.navigate(view);assert.match(h.content(),/Connect your private depot/);assert.match(h.content(),/local-barley/);
     assert.doesNotMatch(h.content(),/hidden-demo-field|99999\.87654|export-sensors/);
   }
@@ -194,7 +227,7 @@ test('real dashboard connect, sensor export and disconnect keep private readings
   const h=dashboard({localState,fetch:async()=>response(remote)});
   await h.connect();
   assert.equal(h.element('identity').textContent,'farm-a');assert.equal(h.element('token').value,'');assert.equal(h.element('login').open,false);assert.equal(h.element('refresh-depot').hidden,false);
-  for(const view of ['overview','depot']){h.navigate(view);assert.match(h.content(),/023\.500 %/);assert.match(h.content(),/private-wheat/);assert.doesNotMatch(h.content(),/local-barley|99999\.87654/);}
+  for(const view of ['insights','depot']){h.navigate(view);assert.match(h.content(),/023\.500 %/);assert.match(h.content(),/private-wheat/);assert.doesNotMatch(h.content(),/local-barley|99999\.87654/);}
   assert.equal(h.requests.length,1);assert.equal(h.requests[0].url,'/api/depot');assert.equal(h.requests[0].method,'POST');assert.equal(h.requests[0].headers.Authorization,'Bearer '+TOKEN);assert.deepEqual(JSON.parse(h.requests[0].body),{action:'read'});
   const exported=await h.exportSensors();assert.equal(exported.farm,'farm-a');assert.equal(exported.readings[0].value,'023.500');assert.doesNotMatch(JSON.stringify(exported),/private-wheat|grants|credential|synthetic-farmer-token/);
   h.disconnect();assert.equal(h.element('identity').textContent,'Demo farm');assert.equal(h.element('refresh-depot').hidden,true);assert.match(h.content(),/local-barley/);assert.doesNotMatch(h.content(),/private-wheat|023\.500|99999\.87654|export-sensors/);
@@ -211,20 +244,20 @@ test('navigation during authentication leaves demo sensor data unpromoted until 
 
 test('refresh shows busy controls, blocks overlapping requests and returns newly arrived readings to both farm views',async()=>{
   const wait=deferred();let calls=0;const h=dashboard({fetch:()=>++calls===1?Promise.resolve(response(depot())):wait.promise});
-  await h.connect();const refreshing=h.refresh();
+  await h.connect();h.navigate('insights');const refreshing=h.refresh();
   assert.equal(h.element('refresh-depot').disabled,true);assert.match(h.content(),/data-refresh-depot disabled/);assert.match(h.content(),/id="export-sensors" disabled/);
   await h.refresh();assert.equal(h.requests.length,2,'An overlapping refresh must not send a second request');
   h.disconnect();assert.equal(h.element('identity').textContent,'farm-a');assert.match(h.element('status').textContent,/Wait for the current request/);
   const refreshed=depot();refreshed.state.records=[record('updated-private-wheat')];refreshed.state.sensors.readings.push(row({id:'newly-arrived',value:'027.250',observedAt:'2026-10-18T11:00:00Z',receivedAt:'2026-10-18T11:01:00Z'}));
   wait.resolve(response(refreshed));await refreshing;
   assert.equal(h.element('refresh-depot').disabled,false);assert.match(h.element('status').textContent,/Depot refreshed/);
-  for(const view of ['overview','depot']){h.navigate(view);assert.match(h.content(),/027\.250 %/);assert.match(h.content(),/updated-private-wheat/);assert.doesNotMatch(h.content(),/023\.500 %/);}
+  for(const view of ['insights','depot']){h.navigate(view);assert.match(h.content(),/027\.250 %/);assert.match(h.content(),/updated-private-wheat/);assert.doesNotMatch(h.content(),/023\.500 %/);}
   assert.equal((await h.exportSensors()).readings.length,2);assert.equal(h.storageWrites.length,0);
 });
 
 test('a failed refresh retains the previous snapshot, clears loading and permits a later retry',async()=>{
   let attempt=0;const h=dashboard({fetch:async()=>{attempt++;if(attempt===2)return response({error:'Synthetic storage outage'},503);return response(depot());}});
-  await h.connect();await h.refresh();
+  await h.connect();h.navigate('insights');await h.refresh();
   assert.match(h.element('status').textContent,/Refresh failed: Synthetic storage outage/);assert.match(h.element('status').textContent,/Existing records are unchanged/);assert.match(h.content(),/023\.500 %/);assert.equal(h.element('identity').textContent,'farm-a');assert.equal(h.element('refresh-depot').disabled,false);
   await h.refresh();assert.equal(h.requests.length,3);assert.match(h.element('status').textContent,/Depot refreshed/);assert.equal(h.storageWrites.length,0);
 });
@@ -233,7 +266,7 @@ test('a different farm returned on refresh cannot replace or persist the connect
   const localState={...Core.initial(),records:[record('local-barley')]};let reads=0;
   const other=depot({farm:'farm-b'});other.state.records=[record('other-farm-private-crop')];other.state.sensors=sensors([row({value:'99999.12345'})]);
   const h=dashboard({localState,fetch:async()=>response(++reads===1?depot():other)});
-  await h.connect();await h.refresh();
+  await h.connect();h.navigate('insights');await h.refresh();
   assert.equal(h.element('identity').textContent,'farm-a');assert.match(h.element('status').textContent,/farm identity changed/);assert.match(h.content(),/private-wheat/);assert.match(h.content(),/023\.500 %/);assert.doesNotMatch(h.content(),/other-farm-private-crop|99999\.12345/);
   const exported=await h.exportSensors();assert.equal(exported.farm,'farm-a');assert.equal(exported.readings[0].value,'023.500');assert.equal(h.storageWrites.length,0);assert.equal(h.storage.get('terraviva-v2'),JSON.stringify(localState));
   h.disconnect();assert.doesNotMatch(h.content(),/private-wheat|99999\.12345|023\.500/);
@@ -241,7 +274,7 @@ test('a different farm returned on refresh cannot replace or persist the connect
 
 test('malformed sensor history on refresh cannot replace an already validated farm view',async()=>{
   const malformed=depot();malformed.state.sensors=sensors([row({value:'091.00',unit:'unsupported-unit'})]);let reads=0;
-  const h=dashboard({fetch:async()=>response(++reads===1?depot():malformed)});await h.connect();await h.refresh();
+  const h=dashboard({fetch:async()=>response(++reads===1?depot():malformed)});await h.connect();h.navigate('insights');await h.refresh();
   assert.match(h.element('status').textContent,/Refresh failed/);assert.match(h.content(),/023\.500 %/);assert.doesNotMatch(h.content(),/091\.00|unsupported-unit/);assert.equal(h.element('refresh-depot').disabled,false);assert.equal(h.storageWrites.length,0);
 });
 
