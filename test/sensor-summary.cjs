@@ -71,7 +71,7 @@ function dashboard({localState,search='',fetch:handleFetch=async()=>{throw Error
     // Top-level tabs are clicked directly. Sub-screens must be reachable from their parent tab's
     // content (a data-view button there) before the harness opens them like the click handler does.
     navigate(view){const button=nav.find(item=>item.dataset.view===view);if(button){button.click();return;}
-      const parent={sms:'add',import:'add',depot:'insights',industry:'insights',activity:'permissions'}[view];assert.ok(parent,'Missing view '+view);
+      const parent={sms:'add',import:'add',sensorsadd:'add',publicdata:'add',depot:'insights',industry:'insights',activity:'permissions'}[view];assert.ok(parent,'Missing view '+view);
       nav.find(item=>item.dataset.view===parent).click();assert.match(element('content').innerHTML,new RegExp('data-view="'+view+'"'),'View '+view+' is not reachable from '+parent);
       vm.runInContext('view='+JSON.stringify(view)+';render()',context);},
     connect(candidate=TOKEN){element('connect').click();element('token').value=candidate;return element('login-form').onsubmit({preventDefault(){}});},
@@ -102,7 +102,12 @@ test('home offers exactly three large farmer choices and the tab bar stays at fo
   const tiles=[...h.content().matchAll(/<button class="tile[^"]*" data-view="([^"]+)"/g)].map(m=>m[1]);
   assert.deepEqual(tiles,['add','insights','permissions']);
   assert.match(h.content(),/Add my data/);assert.match(h.content(),/My farm insights/);assert.match(h.content(),/Who sees my data/);
-  h.navigate('add');assert.match(h.content(),/data-view="sms"/);assert.match(h.content(),/data-view="import"/);
+  h.navigate('add');const addTiles=[...h.content().matchAll(/<button class="tile[^"]*" data-view="([^"]+)"/g)].map(m=>m[1]);
+  assert.deepEqual(addTiles,['sms','import','sensorsadd','publicdata']);
+  h.navigate('sensorsadd');assert.match(h.content(),/Data from my sensors/);assert.match(h.content(),/ILLUSTRATIVE SENSOR SNAPSHOT/);
+  h.navigate('publicdata');assert.match(h.content(),/Nothing is added to your farm records unless you say yes/);assert.match(h.content(),/href="\/reference-data\.html"/);
+  h.element('language').value='es';h.element('language').onchange({target:h.element('language')});
+  assert.match(h.element('status').textContent,/Español is coming soon/);assert.equal(h.element('language').value,'en');assert.equal(h.requests.length,0);
 });
 
 test('one tap stops and restarts cooperative sharing without leaving the permissions screen',async()=>{

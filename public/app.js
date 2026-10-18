@@ -28,7 +28,7 @@ function isSample(){return state.records.some(r=>r.id==='demo-record-1'&&r.sourc
 
 // ---------- Simple farmer layout: Home + three big sections ----------
 // Sub-screens live under one of the three sections so the tab bar stays at three choices.
-const PARENT={sms:'add',import:'add',depot:'insights',industry:'insights',activity:'permissions'};
+const PARENT={sms:'add',import:'add',sensorsadd:'add',publicdata:'add',depot:'insights',industry:'insights',activity:'permissions'};
 const ICON={
  add:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12M6 9l6-6 6 6M4 21h16"/></svg>',
  insights:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
@@ -37,7 +37,9 @@ const ICON={
  file:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></svg>',
  list:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h1M3 12h1M3 18h1"/></svg>',
  compare:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M21 20V5"/></svg>',
- history:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 7v5l3 2M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>'
+ history:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 7v5l3 2M3 12a9 9 0 1 0 3-6.7M3 4v4h4"/></svg>',
+ sensor:'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 21v-7M8.5 10.5a5 5 0 0 1 7 0M5.6 7.6a9 9 0 0 1 12.8 0M12 14a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg>',
+ globe:'<svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg>'
 };
 function tile(target,icon,title,text,extra=''){return '<button class="tile'+extra+'" data-view="'+target+'">'+icon+'<strong>'+title+'</strong><span>'+text+'</span></button>'}
 function back(target,label){return '<button class="back" data-view="'+target+'">← Back to '+label+'</button>'}
@@ -88,6 +90,8 @@ function addData(){
  return '<h1>Add my data</h1><p class="lead">Choose the easiest way for you.</p><div class="tiles two">'
   +tile('sms',ICON.text,'Send a text','For example: Harvested 2 tonnes of wheat from North Field')
   +tile('import',ICON.file,'Upload a file','A spreadsheet (CSV) or JSON file of your harvests')
+  +tile('sensorsadd',ICON.sensor,'Data from my sensors','Soil, weather and water readings from your fields')
+  +tile('publicdata',ICON.globe,'My public data','Weather, soil and crop statistics already published about your area')
   +'</div>';
 }
 // ---------- Insights: a plain-language summary of the farmer's own records ----------
@@ -132,6 +136,17 @@ function topPercentMock(){
   +'<div class="table-wrap space"><table><thead><tr><th>Per farm</th><th>You</th><th>Typical farm</th><th>Top 5% average</th></tr></thead><tbody>'+row('Wheat','wheat',' t')+row('Olives','olives',' t')+row('Harvests recorded','harvests','')+'</tbody></table></div>'
   +'<p class="muted">The top group is shown only because it has at least 5 farms. A real version would compare harvest per hectare, use only farms that chose to take part, and explain what the top farms do differently.</p></article>';
 }
+function sensorsAdd(){
+ return back('add','Add my data')+'<h1>Data from my sensors</h1><p class="lead">Readings from sensors in your fields arrive here by themselves. You do not need to type them.</p>'
+  +'<article class="card"><h2>How it works</h2><ol class="steps"><li>Your sensor provider or advisor connects the sensor to Terraviva.</li><li>Readings arrive automatically, marked with the field and the time.</li><li>Only you can see them, unless you choose to share.</li></ol>'
+  +'<a class="link" href="/sensors.html">Open the sensor simulator ↗</a></article>'+sensorSummary();
+}
+function publicData(){
+ const card=(title,text)=>'<article class="card public-card"><h2>'+title+'</h2><p class="big-text">'+text+'</p><span class="pill off">Coming soon</span></article>';
+ return back('add','Add my data')+'<h1>My public data</h1><p class="lead">Information already published about your area, from open sources. Nothing is added to your farm records unless you say yes.</p>'
+  +'<div class="public-grid">'+card('Weather for my area','Rainfall, temperature and frost days near your fields.')+card('Soil of my region','Soil type and organic matter for your area.')+card('Crop statistics','Average yields of your crops in your region.')+'</div>'
+  +'<article class="card space"><h3>See the data now</h3><p>The hackathon’s reference crop, soil and weather tables can already be browsed. They are not linked to your farm.</p><a class="link" href="/reference-data.html">Browse public reference data ↗</a></article>';
+}
 function insights(){
  const grouped=new Map();for(const r of state.records)grouped.set(r.product,(grouped.get(r.product)||0)+r.volume);
  const max=Math.max(1,...grouped.values());
@@ -169,6 +184,8 @@ const c=$('#content');
 if(view==='overview')c.innerHTML=home();
 if(view==='add')c.innerHTML=addData();
 if(view==='insights')c.innerHTML=insights();
+if(view==='sensorsadd')c.innerHTML=sensorsAdd();
+if(view==='publicdata')c.innerHTML=publicData();
 if(view==='sms'){c.innerHTML=back('add','Add my data')+'<h1>Send a text</h1><p class="lead">Write what you harvested, then reply YES to save it.</p><div class="two-col"><article class="phone"><div class="phone-title">◒ Terraviva <small>Field assistant · '+(token?'authenticated':'simulated')+'</small></div><div class="messages" aria-live="polite">'+chat.map(m=>'<p class="bubble '+m.who+'">'+esc(m.text)+'</p>').join('')+'</div><form id="sms-form"><label class="sr-only" for="message">Your message</label><input id="message" maxlength="500" required placeholder="Type a message…" autocomplete="off"><button class="primary" '+(busy?'disabled':'')+'>Send</button></form></article><div><article class="card"><h3>Tap an example</h3><div class="commands">'+['Harvested 12 tonnes of wheat from North Field','YES','SUMMARY','SHARE COOP 7','CONFIRM','ACCESS','REVOKE COOP'].map(x=>'<button class="link" data-command="'+x+'">'+x+'</button>').join('')+'</div><p class="muted">Confirmation expires after 10 minutes. Dates use UTC in this pilot. Supported language: English, using the examples above.</p></article><article class="card space"><p class="eyebrow">JURY DEMO · OPTIONAL REAL SEND</p><p>The conversation here is simulated. A guarded real send uses a presenter-only confirmation, a fixed recipient and a strict daily limit.</p><a class="link" href="/live-sms.html">Open guarded live SMS →</a></article></div></div>';$('#sms-form').onsubmit=send;const box=$('.messages');box.scrollTop=box.scrollHeight}
 if(view==='import'){importView.render(c);c.insertAdjacentHTML('afterbegin',back('add','Add my data'))}
 if(view==='depot')c.innerHTML=back('insights','My farm insights')+'<div class="section-head"><div><h1>All my records</h1><p class="muted">Confirmed harvest records · '+(token?'centrally stored pilot':'local demonstration')+'</p></div><div class="actions"><button class="link" id="analyse-records">Analyse my records ↗</button><button class="link" id="export">Download my records</button></div></div>'+records(state.records)+'<p class="muted">Harvest records are farmer declarations or imported source records, not independently verified measurements or certificates.</p>'+sensorSummary();
@@ -195,6 +212,8 @@ function removeCertificate(id){if(token||busy)return;const cert=certificates().f
  state.certificates=certificates().filter(c=>c.id!==id);state.events.unshift({time:new Date().toISOString(),text:'Certificate removed: '+cert.name});persist();$('#status').textContent='Certificate removed.';render()}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.view){view=b.dataset.view;$('#status').textContent='';render()}if(b.dataset.command)submit(b.dataset.command);if(b.id==='share-coop')shareCoop();if(b.id==='stop-coop')submit('REVOKE COOP',{stay:true});if(b.dataset.removeCert)removeCertificate(b.dataset.removeCert);if(b.id==='analyse-records')analyseRecords();if(b.hasAttribute('data-refresh-depot'))refreshDepot();if(b.id==='export-sensors'&&token&&!busy)downloadJSON(TerraSensorSummary.exportHistory(state.sensors,farm),'terraviva-sensors.json');if(b.id==='export'){const u=URL.createObjectURL(new Blob([JSON.stringify({farm,records:state.records},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='terraviva-records.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}});
 $('#connect').onclick=()=>{if(busy){$('#status').textContent='Wait for the current request to finish before switching depots.';return}if(token){token='';farm='Demo farm';loadBrowserWallet();chat=welcome();changedDepot();$('#connect').textContent='Connect private depot';render()}else $('#login').showModal()};
+// Demo only: shows the planned language choice without translating the page yet.
+$('#language').onchange=e=>{const name={es:'Español',fr:'Français',it:'Italiano',de:'Deutsch',pl:'Polski',nl:'Nederlands'}[e.target.value];if(name)$('#status').textContent=name+' is coming soon. This demo is in English for now.';e.target.value='en'};
 $('#cancel-login').onclick=()=>$('#login').close();
 $('#login-form').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const candidate=$('#token').value;try{const data=TerraSensorSummary.validateDepot(await api('read',{},candidate));token=candidate;state=data.state;farm=data.farm;chat=[];changedDepot();$('#token').value='';$('#login').close();$('#connect').textContent='Disconnect'}catch(err){token='';$('#login-error').textContent=err.message}finally{busy=false;render()}};
 render();

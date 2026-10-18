@@ -105,3 +105,14 @@ details summary{cursor:pointer;font-size:16px;font-weight:bold;color:var(--green
 .crop-row.compare.top progress::-webkit-progress-value{background:#b7a163}.crop-row.compare.top progress::-moz-progress-bar{background:#b7a163}.crop-row.compare.top progress{color:#b7a163}
 .simple .mock td,.simple .mock th{font-size:15px}
 @media(max-width:700px){.card dl.brief{grid-template-columns:1fr}}
+
+/* Language choice (demo) and extra data sources */
+.language{display:flex;align-items:center;gap:6px;margin:0;font-size:15px;color:var(--green)}
+.language svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.language select{font-size:15px;padding:9px 10px;border-radius:6px;min-height:44px;cursor:pointer}
+.steps{font-size:18px;line-height:1.6;padding-left:24px;margin:10px 0 18px}
+.public-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px}
+.public-card h2{font-size:21px}
+@media(max-width:800px){.public-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.language select{font-size:14px;padding:8px}}
+.public-card{display:flex;flex-direction:column;align-items:flex-start}.public-card .big-text{flex:1}
