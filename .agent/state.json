@@ -1,6 +1,6 @@
 {
-  "task": "Populate the main farmer demo and repair legacy empty-wallet loading",
-  "status": "Follow-up: isolated showcase handles empty-but-edited legacy storage; explicit demo=ana link; deployment pending",
-  "verification": ["npm test: 143 pass", "regressions cover empty wallets with events, sensors, processed messages, consent and unknown metadata", "explicit showcase preserves existing records", "npm run build passes", "git diff --check passes"],
-  "limitations": ["No SMS sent", "Sensor snapshot and industry cohort are explicitly synthetic", "Private depots are never seeded", "Main SMS screen remains a simulator or authenticated text console, not an outbound sender"]
+  "task": "Guarded live jury SMS from the farmer demo",
+  "status": "implemented; deployment pending; activation blocked on Vercel authentication and Redis configuration",
+  "verification": ["npm test: 145 pass", "mocked provider: consent, code, disabled mode, fixed recipient, concurrent replay, global cap and ambiguous outcome checks", "npm run build passes", "git diff --check passes"],
+  "limitations": ["No actual SMS sent", "Vercel environment-name inspection found only SMS_MODE and three Twilio keys", "Shared Redis, farmer authentication, recipient map, demo enable flag and presenter hash still required", "Inbound SMS channel is unchanged"]
 }

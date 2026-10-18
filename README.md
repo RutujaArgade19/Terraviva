@@ -126,7 +126,7 @@ The inbound SMS endpoint returns TwiML for the provider to reply. Outbound SMS i
 
 ### Outbound SMS channel
 
-The authenticated outbound route sends only to the verified enrolled E.164 number for that farm after consent is recorded. `SMS_MODE=demo` returns an explicit no-send response; `SMS_MODE=live` additionally requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and an SMS-capable `TWILIO_FROM_NUMBER`. Keep all provider variables server-only in Vercel. Do not test live delivery from the browser until the destination and message have been explicitly approved.
+The outbound route's ordinary `send` action is simulation-only. Real sending uses the guarded jury flow at `/live-sms.html`: farmer authentication, a separate presenter code, server-fixed recipient/message, explicit per-send consent, atomic three-attempt daily quota, and request replay protection. See [Live jury SMS setup](docs/live-jury-sms.md) for the required Vercel settings. All provider credentials stay server-side. Provider acceptance is not delivery; the UI can retrieve delivery status without resending.
 
 ## Deployment
 

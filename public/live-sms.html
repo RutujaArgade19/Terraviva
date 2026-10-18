@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Terraviva · Live jury SMS</title><link rel="stylesheet" href="/style.css"></head>
+<body><main><a href="/?demo=ana">← Back to Ana’s sample wallet</a><h1>A real message.<br><em>A deliberate choice.</em></h1>
+<p class="demo-note">LIVE SMS · Presenter only · May incur provider charges. The public wallet simulator never sends SMS.</p>
+<article class="card"><h2>1. Unlock the live preview</h2><p>Use the farmer access token issued for the approved demo recipient. It is never saved in browser storage.</p>
+<form id="preview-form"><label>Farmer access token<input id="access" type="password" autocomplete="off" required minlength="32"></label><button class="primary">Preview approved message</button></form></article>
+<article class="card space" id="send-panel" hidden><h2>2. Confirm one real SMS</h2><p>Recipient: <strong id="recipient"></strong></p><blockquote id="body"></blockquote><p>At most three attempts per UTC day across all presenters. Retries with the same request ID cannot send twice for seven days.</p>
+<form id="send-form"><label>Presenter confirmation code<input id="code" type="password" autocomplete="off" required maxlength="64"></label><p><label><input type="checkbox" id="consent" required> The recipient agreed to this demo SMS. I approve this single send and its provider charges.</label></p><button class="primary" id="live-send">Send one real SMS</button></form></article>
+<article class="card space"><p id="result" role="status" aria-live="polite">No SMS has been sent.</p><button class="link" id="check" hidden>Check delivery status (does not resend)</button></article>
+</main><script src="/live-sms.js"></script></body></html>
