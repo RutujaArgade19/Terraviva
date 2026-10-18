@@ -10,6 +10,10 @@ These files were recovered individually from the supplied OneDrive collection. T
 
 The [data report](https://terraviva-ruddy.vercel.app/data-report.html) contains full-table descriptive analysis, source hashes and limitations. The [reference-data browser](https://terraviva-ruddy.vercel.app/reference-data.html) exposes all source columns and rows with full-source filtering. Both remain separate from the private farmer ledger and its permissions.
 
+## Five-minute pitch
+
+Open `/pitch.html` (for example, `https://terraviva-ruddy.vercel.app/pitch.html`) for the hackathon presentation view. It uses clearly labeled illustrative data for Ana García, shows the farmer wallet, sensors, permissions and the value-return story, and provides a click-through SMS conversation. The page is presentation-only: it never sends a message. Use the full workspace for the actual authenticated pilot flow.
+
 ## Run
 
 Requires Node 22 or later and Python 3.11 or later. Reference preparation runs during the build using Python's standard library. The test command also prepares the source data and generates the report before tests run, so a fresh checkout has no dependency on previously generated files. No npm or pip packages are required.
@@ -118,7 +122,11 @@ Use **Connect private depot** and your farmer token. Tokens are held in browser 
 
 Stored farm state uses AES-256-GCM with farm-bound additional authenticated data. Redis compare-and-swap updates avoid lost concurrent writes. Message IDs deduplicate delivery retries. Twilio form signatures are checked before processing. Duplicate webhook deliveries return empty TwiML to avoid duplicate replies. Confirmation expires in ten minutes. Rate limiting is per enrolled farm: 60 requests/minute. Missing service configuration fails closed.
 
-The SMS endpoint returns TwiML for the provider to reply; no unsolicited outbound SMS API is used. SMS commands cannot enable commercial use or add recipients. Use `REVOKE COOP`, not the carrier-reserved `STOP` keyword.
+The inbound SMS endpoint returns TwiML for the provider to reply. Outbound SMS is available through `POST /api/sms-send`, but is disabled by default. SMS commands cannot enable commercial use or add recipients. Use `REVOKE COOP`, not the carrier-reserved `STOP` keyword.
+
+### Outbound SMS channel
+
+The authenticated outbound route sends only to the verified enrolled E.164 number for that farm after consent is recorded. `SMS_MODE=demo` returns an explicit no-send response; `SMS_MODE=live` additionally requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and an SMS-capable `TWILIO_FROM_NUMBER`. Keep all provider variables server-only in Vercel. Do not test live delivery from the browser until the destination and message have been explicitly approved.
 
 ## Deployment
 
