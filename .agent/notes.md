@@ -8,3 +8,4 @@
 - Outbound SMS is isolated in api/sms-send.js. It requires farmer bearer auth, enrolled E.164 phone, persisted opt-in, per-farm rate limiting, and SMS_MODE=live before calling Twilio. Demo mode returns an explicit no-send result.
 - Verification for this slice: npm test (11 pass), npm run build, git diff --check.
 - Browser demo now seeds Terra.demo() on first visit: three illustrative harvests, active COOP access, and four activity events; commercial participation remains off and the UI labels the data as illustrative/sample-only.
+- Farmer SMS view now includes consent and outbound-message controls calling api/sms-send; screenshot credentials were not used.
