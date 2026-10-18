@@ -2,6 +2,7 @@
 const $=s=>document.querySelector(s),esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=Terra.demo(),view='overview',token='',farm='Demo farm',busy=false,depotVersion=0,reportWindow=null,reportTransfer=null;
 try{const x=JSON.parse(localStorage.getItem('terraviva-v2'));if(x&&Array.isArray(x.records)&&Array.isArray(x.grants)&&Array.isArray(x.events))state=x}catch{}
+if(!state.records.length&&!state.sensors)persist();
 let chat=[{who:'bot',text:'Welcome to Terraviva. Try: Harvested 12 tonnes of wheat from North Field.'}];
 function persist(){if(!token)try{localStorage.setItem('terraviva-v2',JSON.stringify(state))}catch{$('#status').textContent='Browser storage unavailable. Keep this tab open.'}}
 async function api(action,extra={},accessToken=token){const r=await fetch('/api/depot',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+accessToken},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw Object.assign(Error(data.error||'Request failed'),{issues:data.issues,code:data.code,status:r.status});return data}
