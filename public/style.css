@@ -92,3 +92,16 @@ details summary{cursor:pointer;font-size:16px;font-weight:bold;color:var(--green
  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;margin:0;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));gap:4px;background:#fff;border-top:1px solid var(--line)}
  .tabs button{min-height:64px;border:0;font-size:12px;padding:6px 2px;border-radius:10px}.tabs svg{width:26px;height:26px}
  .simple h1{font-size:28px}.simple h1.hello{font-size:34px}.lead{font-size:18px}.crop-row{grid-template-columns:90px minmax(0,1fr) 70px;font-size:16px}.big{width:100%}}
+
+/* Insights: brief analysis and illustrative top-5% comparison */
+.card dl.brief{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;margin:16px 0 8px}
+.brief div{background:#f1f5eb;border-radius:12px;padding:14px 16px}
+.brief dt{font-size:13px;font-weight:bold;letter-spacing:.5px;text-transform:uppercase;color:#5e7554}
+.brief dd{margin:6px 0 0;font-size:18px}
+.mock{border:2px dashed #b7a163;background:#fffdf6}
+.mock h3{margin:18px 0 4px}
+.crop-row.compare.you progress::-webkit-progress-value{background:var(--green)}.crop-row.compare.you progress::-moz-progress-bar{background:var(--green)}.crop-row.compare.you progress{color:var(--green)}
+.crop-row.compare.typical progress::-webkit-progress-value{background:#a9b79a}.crop-row.compare.typical progress::-moz-progress-bar{background:#a9b79a}.crop-row.compare.typical progress{color:#a9b79a}
+.crop-row.compare.top progress::-webkit-progress-value{background:#b7a163}.crop-row.compare.top progress::-moz-progress-bar{background:#b7a163}.crop-row.compare.top progress{color:#b7a163}
+.simple .mock td,.simple .mock th{font-size:15px}
+@media(max-width:700px){.card dl.brief{grid-template-columns:1fr}}

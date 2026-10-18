@@ -123,6 +123,15 @@ test('farmer certificates are added, escaped, marked by validity and removed in 
   await h.run('removeCertificate('+JSON.stringify(saved.certificates[0].id)+')');assert.match(h.content(),/No certificates yet/);
 });
 
+test('insights explain the farmer’s own records and label the top-5% comparison as invented',async()=>{
+  const h=dashboard({localState:Core.initial()});
+  h.navigate('insights');const html=h.content();
+  assert.match(html,/Your farm in brief/);assert.match(html,/wheat<\/strong>: 20\.50 t, 84%/);assert.match(html,/North Field<\/strong> gave the most: 12\.40 t/);
+  assert.match(html,/ILLUSTRATIVE MOCK-UP · INVENTED FARMS, NOT REAL DATA/);assert.match(html,/the 6 farms with the largest total harvest/);
+  const h2=dashboard({localState:Core.initial(),fetch:async()=>response(depot())});await h2.connect();h2.navigate('insights');
+  assert.doesNotMatch(h2.content(),/ILLUSTRATIVE MOCK-UP/);assert.match(h2.content(),/Your farm in brief/);
+});
+
 test('sample never populates a connected private depot and disconnect restores the browser example',async()=>{
   const h=dashboard({localState:Core.initial(),fetch:async()=>response({farm:'empty-private',state:Core.initial()})});
   await h.connect();assert.doesNotMatch(h.content(),/Ana García|ILLUSTRATIVE SENSOR SNAPSHOT/);

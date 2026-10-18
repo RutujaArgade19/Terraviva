@@ -90,12 +90,55 @@ function addData(){
   +tile('import',ICON.file,'Upload a file','A spreadsheet (CSV) or JSON file of your harvests')
   +'</div>';
 }
+// ---------- Insights: a plain-language summary of the farmer's own records ----------
+function sum(rows){return rows.reduce((a,r)=>a+r.volume,0)}
+function briefAnalysis(){
+ const rows=state.records;if(!rows.length)return '';
+ const by=key=>{const m=new Map();for(const r of rows)m.set(r[key],(m.get(r[key])||0)+r.volume);return [...m.entries()].sort((a,b)=>b[1]-a[1])};
+ const all=sum(rows),[crop,cropT]=by('product')[0],[field,fieldT]=by('field')[0];
+ const latest=[...rows].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
+ const points=[
+  ['Main crop','<strong class="crop-name">'+esc(crop)+'</strong>: '+cropT.toFixed(2)+' t, '+Math.round(100*cropT/all)+'% of everything you recorded'],
+  ['Best field','<strong>'+esc(field)+'</strong> gave the most: '+fieldT.toFixed(2)+' t'],
+  ['Average harvest',(all/rows.length).toFixed(2)+' t each time, over '+rows.length+(rows.length===1?' harvest':' harvests')],
+  ['Last harvest',esc(day(latest.date))+' · '+esc(latest.volume)+' t of '+esc(latest.product)+' from '+esc(latest.field)]
+ ];
+ return '<article class="card space"><h2>Your farm in brief</h2><dl class="brief">'+points.map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+v+'</dd></div>').join('')+'</dl><p class="muted">Worked out from your own records only. Nobody else’s data is used here.</p></article>';
+}
+// Fixed, invented cohort for the browser demo only. Seeded so the mock-up is identical on every visit.
+const MOCK_FARMS=120,TOP_SHARE=0.05;
+function mockCohort(){
+ let seed=2026;const rand=()=>{seed=(seed+0x6D2B79F5)|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296};
+ const normal=(m,sd)=>m+sd*Math.sqrt(-2*Math.log(1-rand()))*Math.cos(2*Math.PI*rand());
+ return Array.from({length:MOCK_FARMS},()=>{const wheat=Math.max(2,normal(15,5)),olives=Math.max(0.5,normal(4.5,1.8));return {wheat,olives,total:wheat+olives,harvests:Math.max(1,Math.round(normal(4,1.5)))}});
+}
+function topFarms(){
+ const farms=mockCohort().sort((a,b)=>b.total-a.total),n=Math.ceil(farms.length*TOP_SHARE);
+ if(n<5)return null; // same minimum-group rule as the aggregate core
+ const avg=(rows,k)=>rows.reduce((a,f)=>a+f[k],0)/rows.length,med=k=>{const v=farms.map(f=>f[k]).sort((a,b)=>a-b),lo=Math.floor((v.length-1)/2),hi=Math.ceil((v.length-1)/2);return (v[lo]+v[hi])/2};
+ const top=farms.slice(0,n);
+ return {n,count:farms.length,top:{total:avg(top,'total'),wheat:avg(top,'wheat'),olives:avg(top,'olives'),harvests:avg(top,'harvests')},typical:{total:med('total'),wheat:med('wheat'),olives:med('olives'),harvests:med('harvests')}};
+}
+function topPercentMock(){
+ if(token)return '';
+ const m=topFarms();if(!m)return '';
+ const mine={total:sum(state.records),wheat:sum(state.records.filter(r=>r.product==='wheat')),olives:sum(state.records.filter(r=>r.product==='olives')),harvests:state.records.length};
+ const max=Math.max(mine.total,m.top.total,m.typical.total);
+ const bar=(label,v,cls)=>'<div class="crop-row compare '+cls+'"><span>'+label+'</span><progress max="'+max.toFixed(2)+'" value="'+v.toFixed(2)+'">'+v.toFixed(1)+' t</progress><strong>'+v.toFixed(1)+' t</strong></div>';
+ const row=(label,k,unit)=>'<tr><td>'+label+'</td><td>'+mine[k].toFixed(unit?1:0)+unit+'</td><td>'+m.typical[k].toFixed(unit?1:0)+unit+'</td><td>'+m.top[k].toFixed(unit?1:0)+unit+'</td></tr>';
+ return '<article class="card space mock"><p class="eyebrow">ILLUSTRATIVE MOCK-UP · INVENTED FARMS, NOT REAL DATA</p><h2>How the top 5% of similar farms do</h2>'
+  +'<p>'+m.count+' invented wheat and olive farms like yours. The top 5% are the '+m.n+' farms with the largest total harvest this season.</p>'
+  +'<h3>Total harvest this season</h3>'+bar('You',mine.total,'you')+bar('Typical farm',m.typical.total,'typical')+bar('Top 5%',m.top.total,'top')
+  +'<div class="table-wrap space"><table><thead><tr><th>Per farm</th><th>You</th><th>Typical farm</th><th>Top 5% average</th></tr></thead><tbody>'+row('Wheat','wheat',' t')+row('Olives','olives',' t')+row('Harvests recorded','harvests','')+'</tbody></table></div>'
+  +'<p class="muted">The top group is shown only because it has at least 5 farms. A real version would compare harvest per hectare, use only farms that chose to take part, and explain what the top farms do differently.</p></article>';
+}
 function insights(){
  const grouped=new Map();for(const r of state.records)grouped.set(r.product,(grouped.get(r.product)||0)+r.volume);
  const max=Math.max(1,...grouped.values());
  const crops=[...grouped.entries()].sort((a,b)=>b[1]-a[1]).map(([p,n])=>'<div class="crop-row"><span class="crop-name">'+esc(p)+'</span><progress max="'+max.toFixed(2)+'" value="'+n.toFixed(2)+'">'+n.toFixed(2)+' t</progress><strong>'+n.toFixed(2)+' t</strong></div>').join('');
  return '<h1>My farm insights</h1><p class="lead">Everything you have recorded, in one place.</p>'+stats()
   +'<article class="card"><h2>Your harvest by crop</h2>'+(crops||'<p class="muted">Your insights fill in automatically when you add a harvest.</p>')+'</article>'
+  +briefAnalysis()+topPercentMock()
   +'<div class="tiles two space">'
   +tile('depot',ICON.list,'All my records','See, download or analyse every harvest')
   +tile('industry',ICON.compare,'Compare with other farms','How farms like yours are doing')
