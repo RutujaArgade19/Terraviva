@@ -1,5 +1,5 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path');
-const routes={'/api/depot':require('./api/depot.js'),'/api/sms':require('./api/sms.js')};
+const routes={'/api/depot':require('./api/depot.js'),'/api/sms':require('./api/sms.js'),'/api/sms-send':require('./api/sms-send.js')};
 const publicFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/core.js':'core.js','/style.css':'style.css'};
 http.createServer((req,res)=>{const route=new URL(req.url,'http://localhost').pathname;if(routes[route])return routes[route](req,res);
 const file=publicFiles[route];if(!file){res.writeHead(404);return res.end('Not found')}
