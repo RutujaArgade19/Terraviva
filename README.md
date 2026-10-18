@@ -1,6 +1,62 @@
 # Terraviva
 
-Farmer-controlled data depot with an SMS field interface, personal dashboard, device sensor collection, scoped cooperative access, dataset imports and a separate commercial participation choice. The [product brief](docs/product-brief.md) describes the farmer wallet and its wider roadmap.
+### A home for your data. A voice from the field.
+
+Farmers grow food. Sharing the records behind it should not become a second job—or mean giving up control of those records.
+
+**Terraviva is a farmer-controlled data wallet:** record a harvest, bring in field data, and decide who can use it and for how long. This hackathon MVP makes that idea tangible through a populated farmer workspace, a text-message journey and time-limited cooperative access.
+
+[**Meet Ana · Open the demo**](https://terraviva-ruddy.vercel.app/?demo=ana) · [Five-minute walkthrough](docs/five-minute-demo.md) · [Live SMS setup](docs/live-jury-sms.md) · [Data report](https://terraviva-ruddy.vercel.app/data-report.html)
+
+## Meet Ana. Follow one record.
+
+Ana García is our **fictional demonstration farmer** in Valencia. Her starting wallet contains three wheat and olive harvests, **24.30 tonnes** in total, a cooperative permission and an activity history. Illustrative sensor cards give the dashboard context; they are not connected devices or measured farm evidence.
+
+In **Text from the field**, try:
+
+```text
+Harvested 2 tonnes of wheat from North Field
+YES
+SUMMARY
+```
+
+The confirmed record appears in the **same wallet and dashboard**. Starting from the sample, the total becomes 26.30 tonnes. Then inspect cooperative access, revoke it, and see what the cooperative can no longer read.
+
+**That is the story: capture once, reuse with permission, keep the farmer in control.**
+
+The browser conversation is a simulator: no SMS is sent and no provider charges are incurred. The explicit demo link uses separate browser storage, preserving an existing wallet. Changes persist on that device, so a returning demo may contain more than the initial three records. Private depots are never filled with sample data.
+
+## Five minutes with the jury
+
+| Time | Show | Make the value visible |
+| --- | --- | --- |
+| 0:00–1:00 | Ana’s dashboard | A farmer starts with useful records, not an empty form. |
+| 1:00–2:00 | Record a harvest in the text simulator; reply `YES` | Confirmation turns a short message into a structured record. |
+| 2:00–3:00 | Open **My data depot** and export records | The message and the wallet tell the same story. |
+| 3:00–4:00 | Inspect **Permissions**, then `REVOKE COOP` | Access is a choice the farmer can change. Previously exported copies cannot be recalled. |
+| 4:00–5:00 | Open **Industry insights** | A separately labelled five-farm synthetic cohort illustrates shared value. Ana’s one-farm report stays withheld. |
+
+For an optional real-phone moment, open **Text from the field → Open guarded live SMS**. Rehearse and configure it before the pitch; the browser simulator remains the no-charge fallback. The older `/pitch.html` is a separate presentation mockup, not the interactive wallet used above.
+
+## What works—and what it depends on
+
+| Capability | Available in this MVP | Boundary |
+| --- | --- | --- |
+| Farmer wallet | Harvest records, dashboard, export, permissions and activity | Sample data is fictional; farm declarations are not independent certificates. |
+| Text interface | Confirmation, summaries, time-limited COOP sharing and revocation | Browser simulation is free; real inbound SMS needs a configured Twilio webhook and private backend. English command patterns, not an open-ended AI assistant. |
+| Live jury SMS | Presenter authentication, separate code, fixed recipient/message, send confirmation and delivery-status lookup | Requires server-side setup. Three attempts per UTC day, seven-day request replay protection; provider acceptance is not delivery. |
+| Private depot | Authenticated farm access and encrypted Redis storage | Needs credentials and storage configuration; administrator-issued tokens, not self-service accounts. |
+| Sensor collection | Device-bound ingestion, farmer views and a durable gateway sender | Actual equipment, enrollment and provider bridges must be configured. Sample sensor cards are not live telemetry. |
+| Imports and reference data | Validated harvest imports, full reference-table browsing and descriptive analysis | Reference rows are not silently assigned to farmers or treated as consented commercial data. |
+| Industry insight | Separate synthetic cohort demonstration; minimum-group suppression in the core | No live data marketplace, payments or revenue-sharing programme. |
+
+**Live SMS activation checkpoint — 18 October 2026:** the guarded interface is deployed, but live sending remains blocked pending Redis, farmer authentication and demo configuration in Vercel. Twilio variables alone are not enough. No real delivery has been verified in this implementation session. See [the setup checklist](docs/live-jury-sms.md) before promising a live send.
+
+## The principle behind the product
+
+Sharing with a cooperative should not silently opt a farmer into commercial analytics. Terraviva keeps these choices separate. The pilot grants the pre-approved cooperative access to harvest products, quantities, dates and fields—not prices—and supports expiry and revocation.
+
+The longer-term ambition is to return useful benchmarks to participating farmers and fund the service through permission-based aggregated insights. That is a product direction, not a launched revenue model. Multilingual and multimedia capture, advisor-assisted onboarding and production-grade consent contracts remain part of the [wider product roadmap](docs/product-brief.md).
 
 ## Current data status
 
@@ -10,11 +66,7 @@ These files were recovered individually from the supplied OneDrive collection. T
 
 The [data report](https://terraviva-ruddy.vercel.app/data-report.html) contains full-table descriptive analysis, source hashes and limitations. The [reference-data browser](https://terraviva-ruddy.vercel.app/reference-data.html) exposes all source columns and rows with full-source filtering. Both remain separate from the private farmer ledger and its permissions.
 
-## Five-minute pitch
-
-Open `/pitch.html` (for example, `https://terraviva-ruddy.vercel.app/pitch.html`) for the hackathon presentation view. It uses clearly labeled illustrative data for Ana García, shows the farmer wallet, sensors, permissions and the value-return story, and provides a click-through SMS conversation. The page is presentation-only: it never sends a message. Use the full workspace for the actual authenticated pilot flow.
-
-## Run
+## Run it locally
 
 Requires Node 22 or later and Python 3.11 or later. Reference preparation runs during the build using Python's standard library. The test command also prepares the source data and generates the report before tests run, so a fresh checkout has no dependency on previously generated files. No npm or pip packages are required.
 
@@ -97,15 +149,11 @@ The measured collection is stored in `report/archive-analysis.json`, following [
 
 Edit `report/template.html`, `report/style.css` and `report/ui.js`, then run `npm run report` or `npm run build`. The build validates the analysis contract, embeds all report assets and recomputes exact script/style Content Security Policy hashes. It does not enable `unsafe-inline`.
 
-## Demo journey
+## Try the permission boundary
 
-1. Open **Text from the field** and send: `Harvested 12 tonnes of wheat from North Field`.
-2. Send `YES`. The record appears in **My data depot** and **My dashboard**.
-3. Send `SHARE COOP 7`, then `CONFIRM`. **Permissions** shows the cooperative view.
-4. Send `REVOKE COOP`. Future partner access is denied.
-5. Commercial participation is a separate dashboard choice, off by default.
-6. **Industry insights** withholds results: this workspace has one farm, below the five-farm demonstration threshold.
-7. Export the records or open **Analyse my records** to profile the actual local declarations.
+Send `SHARE COOP 7`, then `CONFIRM`, to grant seven-day access. Open **Permissions** to inspect the cooperative preview. Send `REVOKE COOP` to deny future access. Commercial contribution stays a separate choice, off by default.
+
+**Industry insights** keeps the actual one-farm workspace report withheld. Its separate synthetic example uses five invented opt-in farms; it neither includes Ana’s wallet nor changes anyone’s consent. Export the wallet or choose **Analyse my records** to examine the records actually present in your session.
 
 ## Connect the central pilot
 
