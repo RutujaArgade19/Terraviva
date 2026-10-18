@@ -1,6 +1,6 @@
 {
-  "task": "Implement Terraviva farmer depot, guarded outbound SMS, populated MVP demo, and farmer SMS controls",
+  "task": "Refactor Terraviva SMS integration and add coherent five-minute hackathon pitch",
   "status": "implemented; live-provider activation intentionally disabled",
-  "verification": ["11 automated tests pass", "npm run build passes", "git diff --check passes", "first browser demo visit seeds illustrative farmer data", "farmer SMS consent/send controls are wired to api/sms-send"],
-  "limitations": ["Twilio credentials are not configured", "SMS_MODE defaults to demo", "no live SMS was sent", "commercial reports and sales disabled"]
+  "verification": ["138 automated tests pass", "npm run build passes", "git diff --check passes", "pitch.html is static and presentation-only", "SMS inbound and authenticated outbound routes are deployed in the merged branch"],
+  "limitations": ["Vercel deployment completion was not independently observed", "live SMS delivery was not sent", "commercial reports and sales disabled"]
 }
