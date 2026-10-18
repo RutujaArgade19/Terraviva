@@ -9,3 +9,7 @@ aside{overflow-y:auto}.aside-bottom{position:static;margin-top:32px}nav a{displa
 @media(max-width:600px){.import-destination{align-items:flex-start;flex-direction:column}.import-destination>span:last-child{margin-left:0}.import-mapping{grid-template-columns:1fr}.import-catalog{align-items:stretch;flex-direction:column}.import-counts{gap:7px}.import-counts>div{padding:12px 9px}.import-counts strong{font-size:24px}.import-counts span{font-size:10px}.import-confirm .actions{flex-direction:column}.import-table td{max-width:190px}}
 
 
+
+/* Sensor history shares the authenticated farmer workspace. */
+.sensor-summary{border-top:3px solid #789362}.sensor-summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}.sensor-summary-stats>div{background:#f1f5eb;padding:16px;border-radius:8px}.sensor-summary-stats strong{display:block;font:29px Georgia}.sensor-summary-stats span{display:block;margin-top:5px;font-size:11px;color:#5e7554}.sensor-summary time{overflow-wrap:anywhere}.sensor-summary .actions{margin-top:18px}header .actions{justify-content:flex-end}
+@media(max-width:600px){.sensor-summary-stats{gap:6px}.sensor-summary-stats>div{padding:12px 8px}.sensor-summary-stats strong{font-size:24px}header{height:auto;min-height:80px;gap:12px;padding:15px 0;flex-wrap:wrap}.sensor-summary .actions{align-items:stretch;flex-direction:column}}

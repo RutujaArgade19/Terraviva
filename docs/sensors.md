@@ -4,6 +4,12 @@ Terraviva can receive sensor readings through an authenticated HTTPS endpoint an
 
 This is a small HTTP ingestion pilot. No physical device, field gateway, MQTT broker or vendor account is connected by the repository itself. A deployed endpoint requires the existing Redis and encryption configuration, enrolled device credentials, and a gateway or device that submits the documented requests. The farmer interface reads connected data with a farmer credential; its local demonstration does not imply a hardware connection.
 
+## Gateway collection and farmer workspace
+
+The repository includes a [durable gateway sender](sensor-gateway.md) at `scripts/sensor-gateway.py`. It queues already-mapped JSON observations in a local SQLite outbox and submits them to this endpoint. A background run loop retries temporary failures and sends newly queued records when connectivity returns. Records are acknowledged locally only after the sender validates the complete server receipt. It does not discover devices or read a vendor API by itself. The hardware or vendor adapter must provide observations in the contract below.
+
+**My dashboard** and **My data depot** now display the connected farmer’s stored sensor count, devices represented, source review flags and latest observations. **Refresh depot** loads a new authenticated snapshot of both harvest and sensor history; it does not activate or stop collection. **Export sensor history** downloads only that farmer’s sensor records with their observation and receipt timestamps. The detailed **Farm sensors** workspace retains its device and measurement filters. The disconnected browser demo never imports private sensor history.
+
 ## Credentials and enrollment
 
 Use the existing private-depot variables `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `DEPOT_ENCRYPTION_KEY` and `DEPOT_ACCESS_JSON`. Add a server-only `SENSOR_DEVICE_ACCESS_JSON` array. It is empty by default.
@@ -46,7 +52,7 @@ Send `POST /api/sensors` with `Content-Type: application/json` and `Authorizatio
 
 The server obtains `farm` and the authorized device from the credential. A payload cannot override the farm, device scope, configured field, consent, sharing grants or receiver time. Unsupported fields are rejected. A receiver-assigned `receivedAt` is added after validation.
 
-`observedAt` requires a valid calendar date, seconds and an explicit timezone: `Z` or an offset such as `+02:00`. Fractional seconds may contain up to three digits. The original valid timestamp text is retained. Observations more than five minutes ahead of receiver time are rejected. Delayed readings and out-of-order observations are accepted; there is no requirement for a device to maintain a continuous connection. The gateway must keep unsent records itself and retry later—the service cannot retrieve data that was never submitted.
+`observedAt` requires a valid calendar date, seconds and an explicit timezone: `Z` or an offset such as `+02:00`. Fractional seconds may contain up to three digits. The original valid timestamp text is retained. Observations more than five minutes ahead of receiver time are rejected. Delayed readings and out-of-order observations are accepted; there is no requirement for a device to maintain a continuous connection. The gateway must keep unsent records itself and retry later—the included sender provides this outbox and retry path for observations handed to it. The service cannot retrieve data that was never submitted.
 
 Values may be finite JSON numbers or finite numeric text. Numeric text such as `"23.500"` and `"00023.500"` is retained exactly. JSON numbers are stored using their canonical JavaScript string representation. No unit conversions, rounding, calibration or interpolation are performed.
 
