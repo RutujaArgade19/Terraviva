@@ -1,6 +1,6 @@
 # Five-minute Terraviva demo
 
-Open the main app, not the separate pitch page. Fresh visitors and untouched legacy empty browser wallets load fictional Ana Garcia's three harvests (24.30 t), a seven-day COOP grant and activity. Existing edited wallets are preserved. Private depots always use their own data, even when empty.
+Open `https://terraviva-ruddy.vercel.app/?demo=ana`, not the separate pitch page. This explicitly selects a separately stored sample wallet, even when another browser wallet exists. Empty-but-edited legacy wallets also open the isolated sample automatically, without overwriting the original browser storage. Fresh visitors and untouched legacy empty wallets load fictional Ana Garcia's three harvests (24.30 t), a seven-day COOP grant and activity. Private depots always use their own data, even when empty.
 
 1. **0:00–1:00 — Dashboard:** meet Ana, a fictional wheat and olive farmer in Valencia. Show recorded harvest totals and the explicitly illustrative sensor snapshot.
 2. **1:00–2:00 — Text from the field:** send `Harvested 2 tonnes of wheat from North Field`, then `YES`. This simulator uses the same command engine as the inbound SMS service but sends no SMS.

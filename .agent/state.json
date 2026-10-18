@@ -1,6 +1,6 @@
 {
   "task": "Populate the main farmer demo and repair legacy empty-wallet loading",
-  "status": "implemented and tested; deployment verification pending",
-  "verification": ["npm test: 141 pass", "node --test test/sensor-summary.cjs: 16 pass", "npm run build passes", "git diff --check passes"],
+  "status": "Follow-up: isolated showcase handles empty-but-edited legacy storage; explicit demo=ana link; deployment pending",
+  "verification": ["npm test: 143 pass", "regressions cover empty wallets with events, sensors, processed messages, consent and unknown metadata", "explicit showcase preserves existing records", "npm run build passes", "git diff --check passes"],
   "limitations": ["No SMS sent", "Sensor snapshot and industry cohort are explicitly synthetic", "Private depots are never seeded", "Main SMS screen remains a simulator or authenticated text console, not an outbound sender"]
 }

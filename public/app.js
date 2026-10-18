@@ -1,10 +1,23 @@
 'use strict';
 const $=s=>document.querySelector(s),esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let state=Terra.demo(),view='overview',token='',farm='Demo farm',busy=false,depotVersion=0,reportWindow=null,reportTransfer=null;
-try{state=Terra.browserDemo(JSON.parse(localStorage.getItem('terraviva-v2')))}catch{}
+let browserKey='terraviva-v2';
+function loadBrowserWallet(){
+ browserKey='terraviva-v2';let saved=null;
+ try{saved=JSON.parse(localStorage.getItem(browserKey))}catch{}
+ state=Terra.browserDemo(saved);
+ // Empty-but-edited legacy wallets must not block the showcase or be overwritten.
+ // An explicit demo URL always selects a separately stored fictional wallet.
+ if(!state.records.length||/(?:^|[?&])demo=ana(?:&|$)/.test(location.search||'')){
+  browserKey='terraviva-showcase-ana-v1';let sample=null;
+  try{sample=JSON.parse(localStorage.getItem(browserKey))}catch{}
+  state=sample&&Array.isArray(sample.records)&&sample.records.length&&Array.isArray(sample.grants)&&Array.isArray(sample.events)?sample:Terra.demo();
+ }
+}
+loadBrowserWallet();
 function welcome(){return [{who:'bot',text:'SMS simulation — no messages are sent. Your wallet has '+state.records.length+' harvest records ('+state.records.reduce((n,r)=>n+r.volume,0).toFixed(2)+' tonnes). Try SUMMARY, or record a new harvest and reply YES. Then open My data depot to see the change.'}]}
 let chat=welcome();
-function persist(){if(!token)try{localStorage.setItem('terraviva-v2',JSON.stringify(state))}catch{$('#status').textContent='Browser storage unavailable. Keep this tab open.'}}
+function persist(){if(!token)try{localStorage.setItem(browserKey,JSON.stringify(state))}catch{$('#status').textContent='Browser storage unavailable. Keep this tab open.'}}
 async function api(action,extra={},accessToken=token){const r=await fetch('/api/depot',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+accessToken},body:JSON.stringify({action,...extra})});const data=await r.json();if(!r.ok)throw Object.assign(Error(data.error||'Request failed'),{issues:data.issues,code:data.code,status:r.status});return data}
 const importView=TerraImportUI.create({getContext:()=>({key:depotVersion,farm,connected:Boolean(token)}),getState:()=>state,isBusy:()=>busy,setBusy:value=>{busy=value},refresh:()=>render(),updateState:value=>{state=value;persist()},commitConnected:(rows,options)=>api('import',{rows,sourceName:options.sourceName,sourceKind:options.sourceKind}),analyseSource,status:text=>{$('#status').textContent=text}});
 function sensorSummary(){
@@ -48,7 +61,7 @@ function render(){
 document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
 $('#identity').textContent=farm;
 $('#refresh-depot').hidden=!token;$('#refresh-depot').disabled=busy;
-$('#mode').textContent=token?'Connected pilot depot · Stored centrally. This text panel sends authenticated requests; live SMS requires provider setup.':(isSample()?'Ana García · Fictional sample wallet · ':'Browser demo · ')+'Your changes stay on this device. SMS is simulated; no messages are sent.';
+$('#mode').textContent=token?'Connected pilot depot · Stored centrally. This text panel sends authenticated requests; live SMS requires provider setup.':'Browser demo · '+(isSample()?'Ana García · Fictional sample wallet · ':'')+'Your changes stay on this device. SMS is simulated; no messages are sent.';
 const c=$('#content');
 if(view==='overview'){const grouped=new Map();for(const r of state.records)grouped.set(r.product,(grouped.get(r.product)||0)+r.volume);
 c.innerHTML=stats()+'<div class="two-col"><article class="card"><p class="eyebrow">YOUR HARVEST AT A GLANCE</p><h2>What you have recorded</h2>'+[...grouped.entries()].map(([p,n])=>'<div class="crop"><span>'+esc(p)+'</span><strong>'+n.toFixed(2)+' t</strong></div>').join('')+(!state.records.length?'<p class="muted">Your dashboard fills automatically when you confirm a harvest.</p>':'')+'</article><article class="card green"><p class="eyebrow">VALUE COMES BACK TO YOU</p><h2>One message.<br>Less paperwork.</h2><p>Every confirmed field record becomes part of your depot and dashboard.</p><button class="link" data-view="sms">Record a harvest →</button></article></div><article class="card space"><h3>Commercial participation is '+(state.commercial?'on':'off')+'</h3><p>Your own dashboard works either way. Industry analytics require a separate choice and a sufficiently large participating group.</p><button class="link" data-view="permissions">Manage my choices</button></article>'+sensorSummary()}
@@ -70,7 +83,7 @@ async function submit(text){if(busy)return;busy=true;chat.push({who:'user',text}
 function send(e){e.preventDefault();const text=$('#message').value.trim();if(text)submit(text)}
 async function consent(e){const desired=e.target.checked;if(busy){render();return}busy=true;try{if(token){state=(await api('consent',{enabled:desired})).state}else{state.commercial=desired;state.events.unshift({time:new Date().toISOString(),text:'Commercial aggregate participation '+(desired?'enabled':'disabled')});persist()}$('#status').textContent='Commercial preference saved.'}catch(err){$('#status').textContent=err.message}finally{busy=false;render()}}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.view){view=b.dataset.view;render()}if(b.dataset.command)submit(b.dataset.command);if(b.id==='analyse-records')analyseRecords();if(b.hasAttribute('data-refresh-depot'))refreshDepot();if(b.id==='export-sensors'&&token&&!busy)downloadJSON(TerraSensorSummary.exportHistory(state.sensors,farm),'terraviva-sensors.json');if(b.id==='export'){const u=URL.createObjectURL(new Blob([JSON.stringify({farm,records:state.records},null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download='terraviva-records.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}});
-$('#connect').onclick=()=>{if(busy){$('#status').textContent='Wait for the current request to finish before switching depots.';return}if(token){token='';farm='Demo farm';state=Terra.demo();try{state=Terra.browserDemo(JSON.parse(localStorage.getItem('terraviva-v2')))}catch{}chat=welcome();changedDepot();$('#connect').textContent='Connect private depot';render()}else $('#login').showModal()};
+$('#connect').onclick=()=>{if(busy){$('#status').textContent='Wait for the current request to finish before switching depots.';return}if(token){token='';farm='Demo farm';loadBrowserWallet();chat=welcome();changedDepot();$('#connect').textContent='Connect private depot';render()}else $('#login').showModal()};
 $('#cancel-login').onclick=()=>$('#login').close();
 $('#login-form').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const candidate=$('#token').value;try{const data=TerraSensorSummary.validateDepot(await api('read',{},candidate));token=candidate;state=data.state;farm=data.farm;chat=[];changedDepot();$('#token').value='';$('#login').close();$('#connect').textContent='Disconnect'}catch(err){token='';$('#login-error').textContent=err.message}finally{busy=false;render()}};
 render();

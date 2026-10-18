@@ -19,7 +19,7 @@ const depot=(overrides={})=>({farm:'farm-a',state:{...Core.initial(),records:[re
 const response=(data,status=200)=>({ok:status>=200&&status<300,status,json:async()=>structuredClone(data)});
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no});return{promise,resolve,reject};}
 
-function dashboard({localState,fetch:handleFetch=async()=>{throw Error('Unexpected network request')}}={}){
+function dashboard({localState,search='',fetch:handleFetch=async()=>{throw Error('Unexpected network request')}}={}){
   const html=fs.readFileSync(path.join(root,'public/index.html'),'utf8');
   const nodes=new Map(),listeners={},downloads=[],requests=[],storageWrites=[];
   const storage=new Map(localState?[['terraviva-v2',JSON.stringify(localState)]]:[]);
@@ -54,7 +54,7 @@ function dashboard({localState,fetch:handleFetch=async()=>{throw Error('Unexpect
     createElement(tag){assert.equal(tag,'a');return{click(){}};}
   };
   const context={document,Blob,TextEncoder,TextDecoder,structuredClone,crypto:webcrypto,AbortController,
-    location:{origin:'https://terraviva.example',protocol:'https:'},
+    location:{origin:'https://terraviva.example',protocol:'https:',search},
     localStorage:{getItem:key=>storage.get(key)??null,setItem(key,value){storageWrites.push({key,value});storage.set(key,value);}},
     fetch:async(url,options)=>{requests.push({url,...options});return handleFetch(url,options);},
     URL:{createObjectURL(blob){downloads.push(blob);return'blob:synthetic-export';},revokeObjectURL(){}},
@@ -97,6 +97,24 @@ test('sample never populates a connected private depot and disconnect restores t
   h.navigate('industry');assert.doesNotMatch(h.content(),/SEPARATE SYNTHETIC COHORT/);
   h.disconnect();h.navigate('overview');assert.match(h.content(),/24\.30/);
   assert.equal(h.storageWrites.length,0);
+});
+
+test('empty edited legacy wallets show a separate sample without losing saved data',async()=>{
+ for(const extra of [{events:[{text:'old event'}]},{sensors:{version:1,readings:[]}},{processed:{old:'SUMMARY'}},{commercial:true},{futureField:1}]){
+  const saved={...Core.initial(),...extra},h=dashboard({localState:saved});
+  assert.match(h.content(),/24\.30/);assert.match(h.content(),/Ana García/);
+  await h.submit('Harvested 2 tonnes of wheat from North Field');await h.submit('YES');
+  assert.deepEqual(JSON.parse(h.storage.get('terraviva-v2')),saved);
+  assert.equal(JSON.parse(h.storage.get('terraviva-showcase-ana-v1')).records.length,4);
+ }
+});
+
+test('explicit showcase URL bypasses an existing wallet without overwriting it',async()=>{
+ const saved={...Core.initial(),records:[record('existing-barley')]};
+ const h=dashboard({localState:saved,search:'?demo=ana'});
+ assert.match(h.content(),/24\.30/);assert.doesNotMatch(h.content(),/existing-barley/);
+ await h.submit('SUMMARY');assert.deepEqual(JSON.parse(h.storage.get('terraviva-v2')),saved);
+ assert.equal(h.requests.length,0);
 });
 
 test('browser migration preserves meaningful or unknown saved state',()=>{

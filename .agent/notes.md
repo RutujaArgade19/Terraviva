@@ -12,3 +12,4 @@
 - The coherent pitch surface is public/pitch.html with click-through journey and simulated SMS; it never sends a message.
 - Verification after reconciliation: npm test (138 pass), npm run build, git diff --check.
 - Current correction: 141 tests pass, including returning empty browser state, an SMS-confirmed harvest updating the same wallet, preservation of modified state, and an empty private depot staying empty. Build and diff check pass. Five-minute walkthrough: docs/five-minute-demo.md. No provider call or SMS send performed.
+- Follow-up screenshot still showed zero records. The pristine-only migration did not cover edited empty wallets. Added isolated terraviva-showcase-ana-v1 storage for those cases and explicit ?demo=ana entry; original terraviva-v2 data remains untouched. Verified 143 tests and build. No SMS sent.
