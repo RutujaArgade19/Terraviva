@@ -1,6 +1,6 @@
 {
-  "task": "Implement Terraviva farmer depot and SMS interface",
-  "status": "implemented; deployment and live-provider activation blocked",
-  "verification": ["10 automated tests pass", "npm run build passes", "local HTTP 200", "GitHub Actions passed initial commit"],
-  "limitations": ["browser automation blocked by host sandbox", "Vercel denies project creation", "Redis and Twilio credentials not configured", "commercial reports and sales disabled"]
+  "task": "Implement Terraviva farmer depot and guarded outbound SMS",
+  "status": "implemented; live-provider activation intentionally disabled",
+  "verification": ["11 automated tests pass", "npm run build passes", "git diff --check passes"],
+  "limitations": ["Twilio credentials are not configured", "SMS_MODE defaults to demo", "no live SMS was sent", "commercial reports and sales disabled"]
 }

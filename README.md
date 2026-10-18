@@ -32,6 +32,11 @@ Stored farm state uses AES-256-GCM with farm-bound additional authenticated data
 
 The SMS endpoint returns TwiML for the provider to reply; no unsolicited outbound SMS API is used. SMS commands cannot enable commercial use or add recipients. Use REVOKE COOP, not the carrier-reserved STOP keyword.
 
+### Outbound SMS (disabled by default)
+`SMS_MODE=demo` is the safe default. Authenticated farmer clients may call `POST /api/sms-send` with `{ "action":"consent", "enabled":true }`, then `{ "action":"send", "message":"..." }`; demo responses explicitly report that no message was sent. Consent is stored per farm, can be revoked, and sends are restricted to the verified enrolled farmer E.164 number in `SMS_FARM_MAP_JSON`. The existing per-farm rate limit applies to consent and sends.
+
+For real Twilio delivery, obtain a Twilio Account SID, Auth Token, and an SMS-capable E.164 Twilio number, configure them as server-only variables, set `SMS_MODE=live`, and obtain explicit approval before enabling it. The route reports provider rejection without exposing provider credentials. Do not run live-provider tests against a paid account; use the demo mode and mocked `fetch` tests.
+
 ## Deployment
 Import jesusvilela/Terraviva in Vercel. Framework: Other. Build: npm run build. Output: dist. API routes in api/ are serverless functions. Browser demo works without secrets; central pilot and live SMS need the variables above. A Twilio webhook must be reachable by Twilio; use an appropriate configured domain without Vercel login interception. Do not expose secrets to the browser or commit .env.
 
